@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mothlight</title>
+  <link rel="stylesheet" href="../fonts/inter.css">
+  <link rel="stylesheet" href="../styles/nocturne.css">
+  <link rel="stylesheet" href="../phosphor/regular/style.css">
+  <link rel="stylesheet" href="../phosphor/fill/style.css">
+  <link rel="stylesheet" href="../styles/app.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <header class="popup-head">
+      <div id="mo"></div>
+      <div class="col" style="margin-right:auto;min-width:0">
+        <div class="brand">Mothlight</div>
+        <div id="mood" class="mood"></div>
+      </div>
+      <span id="streak" class="tag tag-accent" title="Days in a row under your browsing goal"></span>
+      <button class="btn btn-ghost btn-icon-sm" data-action="dashboard" title="Open full dashboard" aria-label="Open full dashboard"><i class="ph ph-arrow-square-out"></i></button>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="today"><i class="ph ph-sun-horizon"></i>Today</button>
+      <button class="tab" role="tab" data-tab="ai"><i class="ph ph-sparkle"></i>AI</button>
+      <button class="tab" role="tab" data-tab="week"><i class="ph ph-chart-bar"></i>Week</button>
+      <button class="tab tab-icon" role="tab" data-tab="settings" aria-label="Settings"><i class="ph ph-gear-six"></i></button>
+    </nav>
+
+    <main id="view" class="view"></main>
+
+    <div id="dialog" class="overlay hidden">
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+        <div class="dialog-title" id="dlg-title">Wipe everything?</div>
+        <div class="dialog-body">All tracked time, prompts and streaks are deleted from this browser. There's no copy anywhere else, so this can't be undone.</div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" data-action="cancel-delete">Keep</button>
+          <button class="btn btn-primary" data-action="do-delete">Delete all</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

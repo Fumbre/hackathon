@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mothlight dashboard</title>
+  <link rel="stylesheet" href="../fonts/inter.css">
+  <link rel="stylesheet" href="../styles/nocturne.css">
+  <link rel="stylesheet" href="../phosphor/regular/style.css">
+  <link rel="stylesheet" href="../phosphor/fill/style.css">
+  <link rel="stylesheet" href="../styles/app.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="side">
+      <div class="row" style="gap:var(--space-3)"><div id="mo"></div><div class="brand">Mothlight</div></div>
+      <nav class="side-nav">
+        <a href="#today"><i class="ph ph-sun-horizon"></i>Today</a>
+        <a href="#trends"><i class="ph ph-chart-bar"></i>Trends</a>
+        <a href="#ai"><i class="ph ph-sparkle"></i>AI use</a>
+        <a href="#receipt"><i class="ph ph-receipt"></i>Receipt</a>
+        <a href="#privacy"><i class="ph ph-lock-simple"></i>Privacy</a>
+        <a href="#sources"><i class="ph ph-book-open"></i>How we calculate</a>
+      </nav>
+      <div class="side-foot faint">All data stays in this browser.<br><span id="side-bytes"></span> · 0 requests sent</div>
+    </aside>
+
+    <main class="main">
+      <header class="page-head">
+        <div>
+          <div class="kicker" id="date"></div>
+          <h1 id="mood"></h1>
+        </div>
+        <span id="streak" class="tag tag-accent"></span>
+      </header>
+
+      <section id="today" class="section"></section>
+      <section id="trends" class="section"></section>
+      <section id="ai" class="section"></section>
+      <section id="receipt" class="section"></section>
+      <section id="privacy" class="section"></section>
+      <section id="sources" class="section"></section>
+    </main>
+  </div>
+
+  <div id="dialog" class="dialog-backdrop hidden">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+      <div class="dialog-title" id="dlg-title">Wipe everything?</div>
+      <div class="dialog-body">All tracked time, prompts, streaks and settings are deleted from this browser. There's no copy anywhere else, so this can't be undone.</div>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" data-action="cancel-delete">Keep</button>
+        <button class="btn btn-primary" data-action="do-delete">Delete all</button>
+      </div>
+    </div>
+  </div>
+  <script src="dashboard.js"></script>
+</body>
+</html>
