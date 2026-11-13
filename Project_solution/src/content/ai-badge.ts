@@ -1,15 +1,18 @@
-// The prompt-cost badge on AI sites.
+// Content script on AI sites: the prompt-cost badge + the Send-button detector.
 //
-// What this script does on the page: it adds ONE small element (inside a closed
-// Shadow DOM so the site's CSS can't touch it) that shows today's running total.
+// What this script does on the page:
+//   • adds ONE small element (inside a closed Shadow DOM so the site's CSS can't touch it)
+//     that shows today's running total
+//   • on Claude and Gemini: notices a click on the site's "Send message" button, or Enter in
+//     the chat box (see send-detector.ts), and tells the background "a prompt was sent"
 // What it does NOT do: it never reads the page, the chat, or what you type.
-// Its only inputs are Mothlight's own storage and which site it runs on.
 
 import { providerForHost } from '../lib/ai-sites';
 import { api } from '../lib/browser';
 import { estimatePrompts, fmtRange } from '../lib/footprint';
 import { getDay, getSettings } from '../lib/storage';
 import { promptTotals } from '../lib/stats';
+import { installSendDetector } from './send-detector';
 
 const provider = providerForHost(location.hostname);
 
@@ -81,6 +84,11 @@ async function update() {
 
 if (provider) {
   void update();
+  if (provider.sendButton) {
+    installSendDetector(document, provider.sendButton, () => {
+      void api.runtime.sendMessage({ type: 'promptSent', provider: provider.id });
+    });
+  }
   api.storage.onChanged.addListener((_changes, area) => {
     if (area === 'local') void update();
   });

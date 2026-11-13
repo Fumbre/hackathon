@@ -12,6 +12,12 @@ export const PER_PROMPT = {
   gemini: { wh: 0.24, gco2: 0.03, ml: 0.26 },
   /** Sam Altman, "The Gentle Singularity" (June 2025): average ChatGPT query. CO₂ not given. */
   chatgpt: { wh: 0.34, gco2: null as number | null, ml: 0.32 },
+  /**
+   * Anthropic publishes NO per-prompt figure. This is an INDEPENDENT estimate:
+   * Jegham et al., "How Hungry is AI?" (arXiv 2505.09598, May 2025), Claude 3.7 Sonnet, short prompt
+   * (as reported by secondary summaries of the paper). CO₂ and water not used from it.
+   */
+  claude: { wh: 0.8 },
 } as const;
 
 /** Electricity carbon intensity, gCO₂e per kWh. See docs/SOURCES.md. */
@@ -68,6 +74,17 @@ export function estimatePrompts(prompts: number, figure: FigureChoice, grid: Gri
       ml: [p * f.ml, p * f.ml],
       perPromptWh: f.wh,
       note: `ChatGPT average query: 0.34 Wh, 0.32 mL water (OpenAI's CEO, June 2025). CO₂ not given, so it is estimated with your grid (${gridIntensity(grid)} g/kWh).`,
+    };
+  }
+  if (figure === 'claude') {
+    const f = PER_PROMPT.claude;
+    return {
+      wh: [p * f.wh, p * f.wh],
+      gco2: [p * f.wh * g, p * f.wh * g],
+      // No water figure for Claude: show the range of the two published company figures.
+      ml: [p * PER_PROMPT.gemini.ml, p * PER_PROMPT.chatgpt.ml],
+      perPromptWh: f.wh,
+      note: `Claude: Anthropic publishes no per-prompt figure. 0.8 Wh is an independent estimate (Jegham et al., "How Hungry is AI?", 2025, Claude 3.7 Sonnet, short prompt). It is higher partly because outside studies count the whole server. CO₂ uses your grid; water uses the 0.26–0.32 mL company range.`,
     };
   }
   const lo = PER_PROMPT.low.wh;

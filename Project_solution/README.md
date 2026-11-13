@@ -36,7 +36,7 @@ Pin Mothlight to the toolbar (puzzle-piece icon → pin) and browse as usual.
 | **Active time per website** | Counts only the active tab of the focused window. It stops after 60 s idle (and takes those 60 s back off), on a locked screen, or when the browser is in the background. A tab playing sound still counts. |
 | **Break reminder** | After 1 h of *active* time (you can choose 30 min to 2 h), you get a notification. Chrome adds *Take a break* and *Snooze 15m* buttons. |
 | **Spot AI use** | Recognises ChatGPT, Claude, Gemini, Perplexity, DeepSeek, Grok, Copilot and Le Chat. Prompts are **detected** on the first six. **+1** works everywhere. Time on each site is always shown. |
-| **Footprint** | Energy (Wh), carbon (g CO₂e) and water (mL), shown as a **range** by default, with the figure used and its source. See [docs/SOURCES.md](docs/SOURCES.md). |
+| **Footprint** | Energy (Wh), carbon (g CO₂e) and water (mL), shown as a **range** by default. You can switch to Gemini, ChatGPT or Claude figures; Claude uses an independent estimate because Anthropic publishes none. The figure used and its source are always shown. See [docs/SOURCES.md](docs/SOURCES.md). |
 | **Dashboard** | The popup has Today / AI / Week / Settings tabs. The full dashboard adds a 14-day trend, this week vs last week, a per-service table, a receipt, a privacy page and the maths. |
 | **Private** | `storage.local` only, plus Export JSON and Delete all. The code has no `fetch` and nothing loads from a CDN. |
 
@@ -61,10 +61,15 @@ Pin Mothlight to the toolbar (puzzle-piece icon → pin) and browse as usual.
 | `alarms` | 1-minute heartbeat | Nothing. It is a timer |
 | `notifications` | Break reminder | Nothing. It only shows a message |
 | `webRequest` | Notice that a prompt was **sent** | The method and URL of requests to the AI sites only. **Never the body**: we don't request `requestBody`, so the browser never gives us your prompt |
-| host access: AI sites only | Detection and the badge | chatgpt.com, claude.ai, gemini.google.com, copilot.microsoft.com, perplexity.ai, chat.mistral.ai, chat.deepseek.com, grok.com |
+| host access: AI sites only | Detection, the badge, and on Claude/Gemini the Send button: a click on it, or Enter in the chat box while it's enabled. *Never the text*: `scripts/test-content.mjs` proves this, because any read of the chat box makes the test fail | chatgpt.com, claude.ai, gemini.google.com, copilot.microsoft.com, perplexity.ai, chat.mistral.ai, chat.deepseek.com, grok.com |
 
-Prompt detection is a list of known "send" endpoints in [`src/lib/ai-sites.ts`](src/lib/ai-sites.ts), for example
-`POST /backend-api/conversation` on chatgpt.com. If a site changes its API, detection for that site stops, while time on the site and +1 keep working.
+Prompt detection uses two methods, both set in [`src/lib/ai-sites.ts`](src/lib/ai-sites.ts):
+- **Network** (ChatGPT, Perplexity, DeepSeek, Grok): a known "send" endpoint, e.g. `POST /backend-api/conversation`.
+- **Send button** (Claude, Gemini): their prompts travel over channels the extension can't see (Gemini uses `geminiweb-pa.clients6.google.com/v1/processSession`), so the content script notices a click on the site's **Send message** button, or Enter in the chat box while that button is enabled.
+
+When both methods fire for the same prompt, it counts once. If a site changes its API, detection for that site stops, while time on the site and +1 keep working.
+
+**Detection helper:** in the dashboard under *AI use*, turn on the helper and send one prompt. The live log (Privacy section) lists every POST that was **not** counted, as `POST host /path` with IDs hidden and never the query or body. The new line that appears at that moment is the endpoint to put in `ai-sites.ts`.
 
 ---
 
@@ -77,11 +82,12 @@ Project_solution/
   static/                icons, Nocturne design-system CSS, app.css
   src/lib/               browser shim, storage, footprint maths, AI site list, stats, Mo
   src/background/        tracker (time), reminders, ai-detector (prompts), messages
-  src/content/ai-badge   the badge on AI sites
+  src/content/           the badge on AI sites + the Send-button detector (Claude, Gemini)
   src/popup/             toolbar popup (Today / AI / Week / Settings)
   src/dashboard/         full dashboard page
   src/onboarding/        first-run page (and the Firefox permission step)
   scripts/simulate.mjs   headless test of the real background script with a fake browser + clock
+  scripts/test-content.mjs  jsdom test of the real content script on Claude/Gemini markup
   docs/SOURCES.md        every number and where it comes from
 ```
 
@@ -91,7 +97,7 @@ Project_solution/
 | `npm run build` | Builds both browsers into `dist/` |
 | `npm run watch` | Rebuilds on change |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Builds Chrome, then runs `scripts/simulate.mjs` (14 checks: focus, idle, audible, sleep, midnight, detection, reminders, wipe) |
+| `npm test` | Builds both, then runs `scripts/simulate.mjs` (19 checks of the real background script: focus, idle, audible, sleep, midnight, detection, reminders, wipe) and `scripts/test-content.mjs` (12 checks of the Send-button detector on the real Claude/Gemini markup, including proof it never reads the chat box) |
 | `npm run lint:firefox` | Mozilla's `web-ext lint` |
 | `npm run run:firefox` | Opens Firefox with the extension loaded |
 | `npm run zip` | Builds `release/mothlight-{chrome,firefox}-*.zip` |

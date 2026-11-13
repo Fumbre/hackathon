@@ -11,10 +11,11 @@ shows a **range** by default, and always tells you which figure it used. All con
 | Low: chips only | 0.10 Wh | – | – | Google: same median Gemini prompt, counting only the AI accelerators (TPUs) |
 | Gemini, median text prompt | 0.24 Wh | 0.03 g | 0.26 mL | Google, *Measuring the environmental impact of delivering AI at Google scale*, Aug 2025, [arXiv 2508.15734](https://arxiv.org/abs/2508.15734) |
 | ChatGPT, average query | 0.34 Wh | not given | 0.32 mL | Sam Altman (OpenAI CEO), *The Gentle Singularity*, blog, June 2025 |
+| Claude, short prompt (**independent**) | ≈ 0.8 Wh | – | – | Anthropic publishes no figure. Jegham et al., *How Hungry is AI?*, May 2025, [arXiv 2505.09598](https://arxiv.org/abs/2505.09598), Claude 3.7 Sonnet, short prompt (as reported by secondary summaries; check the paper's table before the demo) |
 
-These are **company figures, not independently checked**. Other studies get very different results.
+The Gemini and ChatGPT rows are **company figures, not independently checked**. The Claude row is the opposite: an outside study, because Anthropic has published nothing. It's higher partly because outside researchers estimate the whole server's power, not just the chips. That gap is exactly why Mothlight shows ranges.
 
-### The three settings (popup → AI tab → "Per-prompt figure")
+### The four settings (popup → AI tab → "Per-prompt figure")
 
 - **Range** (default)
   - energy = prompts × 0.10 … 0.34 Wh
@@ -29,6 +30,10 @@ These are **company figures, not independently checked**. Other studies get very
   - energy = prompts × 0.34 Wh
   - water = prompts × 0.32 mL
   - CO₂e = energy × grid intensity, because OpenAI gives none.
+- **Claude**
+  - energy = prompts × 0.8 Wh (independent estimate)
+  - CO₂e = energy × grid intensity
+  - water = the 0.26 … 0.32 mL company range, because there is no Claude figure.
 
 For "real life" comparisons in Range mode we use the middle figure, 0.24 Wh.
 

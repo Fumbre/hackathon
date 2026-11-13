@@ -10,7 +10,7 @@
 // prompt (the live log on the Privacy page shows every detection). If a site
 // changes, detection for that site stops, while time on site and "+1" still work.
 
-export type FigureKey = 'gemini' | 'chatgpt' | 'other';
+export type FigureKey = 'gemini' | 'chatgpt' | 'claude' | 'other';
 
 export interface AiProvider {
   id: string;
@@ -18,6 +18,12 @@ export interface AiProvider {
   hosts: string[];
   /** Matches the URL path (+ query) of a "send prompt" POST. null = cannot be detected (e.g. WebSocket chat). */
   sendPattern: RegExp | null;
+  /**
+   * CSS selector of the site's "Send" button, for sites whose network request we can't see.
+   * The content script notices a click on it (or Enter in the chat box while it is enabled).
+   * It never reads the text. null = not used.
+   */
+  sendButton: string | null;
   /** Which published per-prompt figure applies as the central estimate. */
   figure: FigureKey;
 }
@@ -29,20 +35,27 @@ export const AI_PROVIDERS: AiProvider[] = [
     hosts: ['chatgpt.com', 'chat.openai.com'],
     // logged-in: /backend-api/conversation or /backend-api/f/conversation; logged-out: /backend-anon/...
     sendPattern: /^\/backend-(api|anon)\/(f\/)?conversation(\?|$)/,
+    sendButton: null, // the network pattern works
     figure: 'chatgpt',
   },
   {
     id: 'claude',
     name: 'Claude',
     hosts: ['claude.ai'],
-    sendPattern: /\/chat_conversations\/[^/]+\/(completion|retry_completion)(\?|$)/,
-    figure: 'other',
+    // e.g. /api/organizations/<org>/chat_conversations/<id>/completion (also retry_completion)
+    sendPattern: /\/(retry_)?completion(\?|$)/,
+    sendButton: 'button[data-testid="chat-input-send"], button[aria-label="Send message"]',
+    figure: 'claude',
   },
   {
     id: 'gemini',
     name: 'Gemini',
     hosts: ['gemini.google.com'],
-    sendPattern: /\/StreamGenerate(\?|$)/,
+    // e.g. /_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=…
+    sendPattern: /StreamGenerate/,
+    // Gemini now sends prompts through geminiweb-pa.clients6.google.com/v1/processSession
+    // (a long-lived channel that also carries other traffic), so we watch the Send button instead.
+    sendButton: 'button[aria-label="Send message"]',
     figure: 'gemini',
   },
   {
@@ -50,6 +63,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     name: 'Perplexity',
     hosts: ['www.perplexity.ai'],
     sendPattern: /^\/rest\/sse\/perplexity_ask(\?|$)/,
+    sendButton: null,
     figure: 'other',
   },
   {
@@ -57,6 +71,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     name: 'DeepSeek',
     hosts: ['chat.deepseek.com'],
     sendPattern: /^\/api\/v0\/chat\/completion(\?|$)/,
+    sendButton: null,
     figure: 'other',
   },
   {
@@ -64,6 +79,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     name: 'Grok',
     hosts: ['grok.com'],
     sendPattern: /^\/rest\/app-chat\/conversations\/(new|[^/]+\/responses)(\?|$)/,
+    sendButton: null,
     figure: 'other',
   },
   {
@@ -71,6 +87,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     name: 'Le Chat (Mistral)',
     hosts: ['chat.mistral.ai'],
     sendPattern: null, // not verified yet: time on site + "+1" only
+    sendButton: null,
     figure: 'other',
   },
   {
@@ -78,6 +95,7 @@ export const AI_PROVIDERS: AiProvider[] = [
     name: 'Copilot',
     hosts: ['copilot.microsoft.com'],
     sendPattern: null, // chats over a WebSocket: one connection, many prompts → not countable
+    sendButton: null,
     figure: 'other',
   },
 ];
@@ -100,6 +118,11 @@ export function providerById(id: string): AiProvider | undefined {
 
 export function providerName(id: string): string {
   return providerById(id)?.name ?? 'Other AI';
+}
+
+/** Can Mothlight count this provider's prompts automatically? */
+export function canDetect(p: AiProvider): boolean {
+  return p.sendPattern !== null || p.sendButton !== null;
 }
 
 export function isAiHost(host: string): boolean {

@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: Settings = {
   figure: 'range',
   laptopWatts: 15,
   badge: true,
+  detectHelper: false,
 };
 
 const LOG_MAX = 60;
@@ -95,7 +96,7 @@ export async function saveSettings(patch: Partial<Settings>): Promise<Settings> 
 // ── focus + reminders ──
 export async function getFocus(): Promise<FocusState> {
   const res = await api.storage.local.get('focus');
-  return (res.focus as FocusState) ?? { active: false, start: 0 };
+  return (res.focus as FocusState) ?? { active: false, start: 0, browserSec: 0 };
 }
 export async function setFocus(f: FocusState): Promise<void> {
   await api.storage.local.set({ focus: f });

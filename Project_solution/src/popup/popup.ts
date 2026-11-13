@@ -1,6 +1,6 @@
 // The toolbar popup: Today / AI / Week / Settings (layout follows the prototype).
 
-import { AI_PROVIDERS, isAiHost, OTHER_PROVIDER_ID, providerForHost } from '../lib/ai-sites';
+import { AI_PROVIDERS, canDetect, isAiHost, OTHER_PROVIDER_ID, providerForHost } from '../lib/ai-sites';
 import { api } from '../lib/browser';
 import { fmtClock, fmtDuration, lastDays } from '../lib/dates';
 import { estimatePrompts, fmtNum, fmtRange, GRIDS, phoneCharges, teaspoons, type GridCode } from '../lib/footprint';
@@ -88,7 +88,7 @@ function viewToday(): string {
         <i class="ph ${m.focus.active ? 'ph-timer' : 'ph-moon'} icon-accent" style="font-size:20px"></i>
         <div class="col" style="flex:1">
           <div style="font-size:13px;font-weight:500">${m.focus.active ? `Focus · <span id="focus-clock">${focusClock()}</span>` : 'Focus session'}</div>
-          <div style="font-size:11px" class="faint">${m.focus.active ? 'Reminders muted, session tracked' : 'Mutes reminders while you study'}</div>
+          <div style="font-size:11px" class="faint">${m.focus.active ? `${fmtDuration(m.focus.browserSec ?? 0)} of it in the browser · reminders muted` : 'Study timer: keeps running off-screen, mutes reminders'}</div>
         </div>
         <button class="btn btn-primary" data-action="${m.focus.active ? 'focus-stop' : 'focus-start'}" style="font-size:12px">${m.focus.active ? 'End' : 'Start'}</button>
       </div>
@@ -122,7 +122,7 @@ function viewAi(): string {
   const services = AI_PROVIDERS.map((prov) => {
     const c = m.today.ai[prov.id];
     const t = prov.hosts.reduce((a, h) => a + (m.today.sites[h.replace(/^www\./, '')] ?? 0), 0);
-    return { name: prov.name, n: (c?.detected ?? 0) + (c?.manual ?? 0), t, auto: prov.sendPattern !== null };
+    return { name: prov.name, n: (c?.detected ?? 0) + (c?.manual ?? 0), t, auto: canDetect(prov) };
   }).filter((s) => s.n > 0 || s.t > 0);
   const other = m.today.ai[OTHER_PROVIDER_ID];
   if (other) services.push({ name: 'Other AI', n: other.manual, t: 0, auto: false });
@@ -154,7 +154,7 @@ function viewAi(): string {
 
     <div class="col" style="gap:var(--space-2)">
       <div class="kicker">Per-prompt figure</div>
-      <div class="seg full">${fig('range', 'Range')}${fig('gemini', 'Gemini')}${fig('chatgpt', 'ChatGPT')}</div>
+      <div class="seg full">${fig('range', 'Range')}${fig('gemini', 'Gemini')}${fig('chatgpt', 'ChatGPT')}${fig('claude', 'Claude')}</div>
       <div class="pretty" style="font-size:11px;line-height:1.5"><span class="muted">${esc(est.note)}</span> <a href="#" data-action="sources">How we calculate</a></div>
     </div>
 

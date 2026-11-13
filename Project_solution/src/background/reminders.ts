@@ -3,7 +3,7 @@
 
 import { api, SUPPORTS_NOTIFICATION_BUTTONS } from '../lib/browser';
 import { dayKey, fmtDuration } from '../lib/dates';
-import { appendLog, getDay, getFocus, getReminder, getSettings, setReminder, updateDay, withLock } from '../lib/storage';
+import { appendLog, getDay, getFocus, getReminder, getSettings, setFocus, setReminder, updateDay, withLock } from '../lib/storage';
 import { activeSeconds, promptTotals } from '../lib/stats';
 
 const NOTIF_ID = 'mothlight-reminder';
@@ -17,7 +17,12 @@ export function intervalLabel(min: number): string {
 /** Called by the tracker with every chunk of active seconds it counts. */
 export async function onActiveSeconds(secs: number): Promise<void> {
   const [r, focus, settings] = await Promise.all([getReminder(), getFocus(), getSettings()]);
-  if (focus.active) return; // studying: no reminders, and the counter waits
+  if (focus.active) {
+    // Studying: no reminders. The study timer itself keeps running (wall clock);
+    // here we only add up how much of the session was spent actively in the browser.
+    await setFocus({ ...focus, browserSec: (focus.browserSec ?? 0) + secs });
+    return;
+  }
   r.activeSec += secs;
   if (r.activeSec >= settings.intervalMin * 60 && Date.now() >= r.snoozeUntil) {
     r.activeSec = 0;

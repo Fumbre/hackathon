@@ -1,6 +1,6 @@
 // The full dashboard: Today, Trends, AI use, Receipt, Privacy, How we calculate.
 
-import { AI_HOST_PATTERNS, AI_PROVIDERS, isAiHost, OTHER_PROVIDER_ID } from '../lib/ai-sites';
+import { AI_HOST_PATTERNS, AI_PROVIDERS, canDetect, isAiHost, OTHER_PROVIDER_ID } from '../lib/ai-sites';
 import { api, IS_FIREFOX } from '../lib/browser';
 import { dayBars } from '../lib/charts';
 import { fmtClock, fmtDuration, lastDays } from '../lib/dates';
@@ -22,9 +22,9 @@ import {
 } from '../lib/footprint';
 import { loadModel, type Model } from '../lib/model';
 import * as mo from '../lib/mo';
-import { exportAll } from '../lib/storage';
+import { exportAll, saveSettings } from '../lib/storage';
 import { activeSeconds, aiSeconds, pctChange, promptTotals, sumDays, topSites } from '../lib/stats';
-import type { LogKind } from '../lib/types';
+import type { FigureChoice, HostStats, LogKind } from '../lib/types';
 import { $, downloadJson, esc, fmtBytes, moHtml, send } from '../lib/ui';
 
 let m: Model;
@@ -75,7 +75,7 @@ function renderToday() {
       ${kpi('ph-laptop', 'Laptop energy', `${fmtNum(lap.wh)} Wh`, `${s.laptopWatts} W × ${fmtDuration(secs)} active`)}
       ${kpi('ph-drop', 'AI water', `${fmtRange(est.ml)} mL`, `≈ ${fmtNum(teaspoons(est.ml[1]))} teaspoons`)}
       ${kpi('ph-cloud', 'Carbon (AI + laptop)', `${fmtRange([est.gco2[0] + lap.gco2, est.gco2[1] + lap.gco2])} g`, `CO₂e · grid: ${GRIDS[s.grid].name}`)}
-      ${kpi('ph-moon', 'Focus', fmtDuration(m.today.focus.seconds), `${m.today.focus.sessions} session${m.today.focus.sessions === 1 ? '' : 's'} · ${m.today.breaks} break${m.today.breaks === 1 ? '' : 's'} taken`)}
+      ${kpi('ph-moon', 'Focus', fmtDuration(m.today.focus.seconds), `${m.today.focus.sessions} session${m.today.focus.sessions === 1 ? '' : 's'} · ${fmtDuration(m.today.focus.browser ?? 0)} in the browser`)}
     </div>
 
     <div class="two">
@@ -179,7 +179,7 @@ function renderTrends() {
 // ── AI use ──
 function renderAi() {
   const wk = lastDays(7);
-  const rows = [...AI_PROVIDERS.map((p) => ({ id: p.id, name: p.name, hosts: p.hosts, auto: p.sendPattern !== null, figure: p.figure })), { id: OTHER_PROVIDER_ID, name: 'Other AI (+1 from popup)', hosts: [] as string[], auto: false, figure: 'other' as const }]
+  const rows = [...AI_PROVIDERS.map((p) => ({ id: p.id, name: p.name, hosts: p.hosts, auto: canDetect(p), figure: p.figure })), { id: OTHER_PROVIDER_ID, name: 'Other AI (+1 from popup)', hosts: [] as string[], auto: false, figure: 'other' as const }]
     .map((p) => {
       const count = (k: string) => {
         const c = m.days[k].ai[p.id];
@@ -191,7 +191,8 @@ function renderAi() {
       return { ...p, today, week, time };
     });
   const used = rows.filter((r) => r.week > 0 || r.time > 0);
-  const figLabel = (f: string) => (f === 'gemini' ? '0.24 Wh (Google)' : f === 'chatgpt' ? '0.34 Wh (OpenAI)' : 'not published → range');
+  const figLabel = (f: string) =>
+    f === 'gemini' ? '0.24 Wh (Google)' : f === 'chatgpt' ? '0.34 Wh (OpenAI)' : f === 'claude' ? '≈0.8 Wh (independent estimate)' : 'not published → range';
 
   $('#ai').innerHTML = `
     <h2>AI use</h2>
@@ -215,8 +216,45 @@ function renderAi() {
             .join('')}
         </tbody>
       </table>
+    </div>
+    <div class="card elev-sm panel">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <div class="col" style="gap:2px">
+          <div class="card-kicker">Detection helper</div>
+          <div class="card-title" style="font-size:15px">A site isn't counted? Find its "send" request</div>
+        </div>
+        <button class="btn ${m.settings.detectHelper ? 'btn-primary' : 'btn-secondary'}" data-action="toggle-helper"><i class="ph ph-bug"></i>${m.settings.detectHelper ? 'Helper on: turn off' : 'Turn helper on'}</button>
+      </div>
+      <p class="card-body pretty">While it's on, the table below shows, per AI site, whether Mothlight has access and how many requests it can see. Every POST that was <em>not</em> counted is also listed in the live log (Privacy section) as <code>POST host /path</code>, with long IDs hidden. Never the query or the body. Turn it off when you're done.</p>
+      <div id="helper-table">${m.settings.detectHelper ? '<p class="faint">Loading…</p>' : ''}</div>
     </div>`;
 }
+
+const FIGURE_NAMES: Record<FigureChoice, string> = { range: 'Range', gemini: 'Gemini', chatgpt: 'ChatGPT', claude: 'Claude' };
+
+// ── Detection helper status (refreshed every 2 s while the helper is on) ──
+async function renderHelperTable() {
+  const el = document.getElementById('helper-table');
+  if (!el || !m?.settings.detectHelper) return;
+  const stats = ((await send({ type: 'detectStats' }).catch(() => ({}))) ?? {}) as Record<string, HostStats>;
+  const rows = await Promise.all(
+    AI_PROVIDERS.flatMap((p) =>
+      p.hosts.map(async (h) => {
+        const access = await api.permissions.contains({ origins: [`https://${h}/*`] }).catch(() => false);
+        const st = stats[bare(h)] ?? { requests: 0, posts: 0, lastPost: '' };
+        const verdict = !access
+          ? '<span class="tag tag-neutral">no access: allow it</span>'
+          : st.requests === 0
+            ? '<span class="faint">open the site to test</span>'
+            : '<span class="tag tag-accent">visible</span>';
+        return `<tr><td>${esc(h)}</td><td>${access ? '✓' : '✗'}</td><td class="num">${st.requests}</td><td class="num">${st.posts}</td><td><code>${esc(st.lastPost || '–')}</code></td><td>${verdict}</td></tr>`;
+      }),
+    ),
+  );
+  el.innerHTML = `<table class="table"><thead><tr><th>Site</th><th>Access</th><th class="num">Requests seen</th><th class="num">POSTs</th><th>Last POST path</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table>
+    <div class="row" style="margin-top:var(--space-3)"><button class="btn btn-primary" data-action="grant"><i class="ph ph-key"></i>Re-ask for access to all AI sites</button></div>`;
+}
+setInterval(() => void renderHelperTable(), 2000);
 
 // ── Receipt ──
 function renderReceipt() {
@@ -257,6 +295,8 @@ function renderReceipt() {
         ${ln(' teaspoons of water', fmtRange([teaspoons(est.ml[0]), teaspoons(est.ml[1])]), 'small')}
         <div class="dash"></div>
         ${ln('Focus sessions', String(m.today.focus.sessions))}
+        ${ln('  study time', fmtDuration(m.today.focus.seconds))}
+        ${ln('  of which on screen', fmtDuration(m.today.focus.browser ?? 0))}
         ${ln('Breaks taken', String(m.today.breaks))}
         <div class="dash"></div>
         <div class="c small">PAID WITH: YOUR ATTENTION</div>
@@ -266,12 +306,12 @@ function renderReceipt() {
         <div class="card-kicker">The maths</div>
         <div class="formula">laptop = ${s.laptopWatts} W × ${(secs / 3600).toFixed(2)} h = ${fmtNum(lap.wh)} Wh</div>
         <div class="formula">AI = ${p} prompts × ${s.figure === 'range' ? '0.10–0.34' : est.perPromptWh} Wh = ${fmtRange(est.wh)} Wh</div>
-        <div class="formula">water = ${p} × ${s.figure === 'range' ? '0.26–0.32' : s.figure === 'gemini' ? PER_PROMPT.gemini.ml : PER_PROMPT.chatgpt.ml} mL = ${fmtRange(est.ml)} mL</div>
+        <div class="formula">water = ${p} × ${s.figure === 'range' ? '0.26–0.32' : s.figure === 'gemini' ? PER_PROMPT.gemini.ml : s.figure === 'chatgpt' ? PER_PROMPT.chatgpt.ml : '0.26–0.32'} mL = ${fmtRange(est.ml)} mL</div>
         <div class="formula">CO₂e = Wh × ${gridIntensity(s.grid)} g/kWh ÷ 1000${s.figure === 'gemini' ? ' (AI part: Google\'s own 0.03 g per prompt)' : ''}</div>
         <div class="formula">phone charges = Wh ÷ ${PHONE_CHARGE_WH} Wh</div>
         <div class="formula">LED minutes = Wh ÷ ${LED_BULB_W} W × 60</div>
         <div class="formula">teaspoons = mL ÷ ${TEASPOON_ML} mL</div>
-        <p class="faint pretty" style="font-size:13px">Figure in use: <strong>${s.figure === 'range' ? 'Range' : s.figure === 'gemini' ? 'Gemini' : 'ChatGPT'}</strong>. ${esc(est.note)}</p>
+        <p class="faint pretty" style="font-size:13px">Figure in use: <strong>${FIGURE_NAMES[s.figure]}</strong>. ${esc(est.note)}</p>
       </div>
     </div>`;
 }
@@ -286,6 +326,7 @@ const LOG_ICON: Record<LogKind, string> = {
   break: 'ph-coffee',
   focus: 'ph-moon',
   privacy: 'ph-lock-simple',
+  debug: 'ph-bug',
 };
 
 function renderPrivacy() {
@@ -297,7 +338,7 @@ function renderPrivacy() {
     ['alarms', 'A 1-minute heartbeat', 'Saves the running time once a minute and checks the reminder.'],
     ['notifications', 'The break reminder', 'Shows the "you\'ve been online for…" message.'],
     ['webRequest', 'Notice that a prompt was sent', 'Sees the method + address of requests to AI sites only. Never the body, so never your prompt.'],
-    ['AI sites (host access)', 'Prompt detection + badge', 'Only chatgpt.com, claude.ai, gemini.google.com, copilot.microsoft.com, perplexity.ai, chat.mistral.ai, chat.deepseek.com, grok.com.'],
+    ['AI sites (host access)', 'Prompt detection + badge', 'On Claude and Gemini: a click on the site\'s own "Send message" button, or Enter in the chat box while that button is enabled. Never the text. Sites: only chatgpt.com, claude.ai, gemini.google.com, copilot.microsoft.com, perplexity.ai, chat.mistral.ai, chat.deepseek.com, grok.com.'],
   ];
   const log = [...m.log].reverse();
 
@@ -350,6 +391,7 @@ function renderSources() {
         <tbody>
           <tr><td>Low: chips only</td><td class="num">${PER_PROMPT.low.wh} Wh</td><td class="num">–</td><td class="num">–</td><td class="muted">Google: same median Gemini prompt, counting only the AI accelerators</td></tr>
           <tr><td>Gemini, median text prompt</td><td class="num">${PER_PROMPT.gemini.wh} Wh</td><td class="num">${PER_PROMPT.gemini.gco2} g</td><td class="num">${PER_PROMPT.gemini.ml} mL</td><td class="muted">Google, "Measuring the environmental impact of delivering AI at Google scale", Aug 2025 (arXiv 2508.15734)</td></tr>
+          <tr><td>Claude, short prompt <span class="tag tag-neutral">independent</span></td><td class="num">≈ ${PER_PROMPT.claude.wh} Wh</td><td class="num">–</td><td class="num">–</td><td class="muted">Anthropic publishes no figure. Independent estimate: Jegham et al., "How Hungry is AI?", May 2025 (arXiv 2505.09598), Claude 3.7 Sonnet</td></tr>
           <tr><td>ChatGPT, average query</td><td class="num">${PER_PROMPT.chatgpt.wh} Wh</td><td class="num">not given</td><td class="num">${PER_PROMPT.chatgpt.ml} mL</td><td class="muted">Sam Altman (OpenAI CEO), "The Gentle Singularity", blog, June 2025</td></tr>
         </tbody>
       </table>
@@ -361,6 +403,7 @@ function renderSources() {
           <li><strong>Range</strong> (default): 0.10 → 0.34 Wh per prompt, water 0.26 → 0.32 mL. It shows how big the uncertainty is.</li>
           <li><strong>Gemini</strong>: Google's full-stack median, including its own CO₂e figure.</li>
           <li><strong>ChatGPT</strong>: OpenAI's average. CO₂e = energy × your grid, because OpenAI gives none.</li>
+          <li><strong>Claude</strong>: no company figure exists, so we use an independent study (≈ 0.8 Wh). It is higher than the company figures partly because outside researchers count the whole server, not just the chips. CO₂e = energy × your grid.</li>
         </ul>
       </div>
       <div class="card elev-sm panel">
@@ -411,6 +454,7 @@ function render() {
 async function refresh(flush = false) {
   m = await loadModel({ flush });
   render();
+  void renderHelperTable();
 }
 
 // ── events ──
@@ -432,6 +476,9 @@ document.addEventListener('click', async (e) => {
     case 'do-delete':
       $('#dialog').classList.add('hidden');
       await send({ type: 'wipe' });
+      break;
+    case 'toggle-helper':
+      await saveSettings({ detectHelper: !m.settings.detectHelper });
       break;
     case 'grant':
       await api.permissions.request({ origins: AI_HOST_PATTERNS }).catch(() => false);

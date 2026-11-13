@@ -14,12 +14,13 @@ export interface DayBucket {
   sites: Record<string, number>;
   /** provider id → prompt counts. */
   ai: Record<string, AiCount>;
-  focus: { sessions: number; seconds: number };
+  /** seconds = wall-clock study time; browser = active browsing seconds during those sessions. */
+  focus: { sessions: number; seconds: number; browser?: number };
   reminders: number;
   breaks: number;
 }
 
-export type FigureChoice = 'range' | 'gemini' | 'chatgpt';
+export type FigureChoice = 'range' | 'gemini' | 'chatgpt' | 'claude';
 
 export interface Settings {
   /** Reminder after this many minutes of *active* browsing. */
@@ -32,6 +33,8 @@ export interface Settings {
   laptopWatts: number;
   /** Show the small prompt-cost badge on AI sites. */
   badge: boolean;
+  /** Detection helper: log method + path of every POST to an AI site (for fixing detection). Off by default. */
+  detectHelper: boolean;
 }
 
 /** The time-slice that is currently being counted (kept in storage.session). */
@@ -45,6 +48,8 @@ export type TrackStatus = 'active' | 'idle' | 'locked' | 'unfocused' | 'no-site'
 export interface FocusState {
   active: boolean;
   start: number; // epoch ms
+  /** Active browsing seconds counted since the session started (same rules as screen time). */
+  browserSec?: number;
 }
 
 export interface ReminderState {
@@ -53,7 +58,7 @@ export interface ReminderState {
   snoozeUntil: number; // epoch ms
 }
 
-export type LogKind = 'prompt' | 'manual' | 'pause' | 'resume' | 'reminder' | 'break' | 'focus' | 'privacy';
+export type LogKind = 'prompt' | 'manual' | 'pause' | 'resume' | 'reminder' | 'break' | 'focus' | 'privacy' | 'debug';
 
 export interface LogEvent {
   t: number;
@@ -65,8 +70,17 @@ export interface LogEvent {
 export type Message =
   | { type: 'flush' }
   | { type: 'addPrompt'; provider: string }
+  | { type: 'promptSent'; provider: string }
   | { type: 'focusStart' }
   | { type: 'focusStop' }
   | { type: 'snooze'; minutes: number }
   | { type: 'wipe' }
-  | { type: 'logExport' };
+  | { type: 'logExport' }
+  | { type: 'detectStats' };
+
+/** Detection helper counters for one AI host (kept in memory only, while the helper is on). */
+export interface HostStats {
+  requests: number;
+  posts: number;
+  lastPost: string;
+}

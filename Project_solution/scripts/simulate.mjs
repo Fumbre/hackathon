@@ -24,7 +24,10 @@ const area = () => {
   };
   return {
     get: async (k) => pick(k),
-    set: async (o) => { Object.assign(data, structuredClone(o)); onChanged.fire({}, 'local'); },
+    set: async (o) => {
+      Object.assign(data, structuredClone(o));
+      onChanged.fire(Object.fromEntries(Object.keys(o).map((k) => [k, { newValue: structuredClone(o[k]) }])), 'local');
+    },
     remove: async (k) => { for (const x of [].concat(k)) delete data[x]; },
     clear: async () => { data = {}; },
     _data: () => data,
@@ -110,18 +113,43 @@ req('GET', 'https://chatgpt.com/backend-api/conversation');
 req('POST', 'https://chatgpt.com/backend-api/conversation/init');
 req('POST', 'https://claude.ai/api/organizations/o1/chat_conversations/c1/completion', 4);
 req('POST', 'https://gemini.google.com/_/BardChatUi/data/assistant.lamda.BardFrontendService/StreamGenerate?bl=x', 5);
+req('POST', 'https://claude.ai/api/organizations/o1/chat_conversations/c1/retry_completion', 7);
+req('POST', 'https://claude.ai/api/organizations/o1/chat_conversations/c1/completion_status', 8); // not a prompt
 await settle();
 check('detects prompts (ChatGPT, Claude, Gemini) and ignores repeats/other requests', () => {
   assert.equal(day().ai.chatgpt.detected, 1);
-  assert.equal(day().ai.claude.detected, 1);
+  assert.equal(day().ai.claude.detected, 2);
   assert.equal(day().ai.gemini.detected, 1);
 });
+
+// 6b. Detection helper logs unmatched POSTs (path only, IDs hidden) when switched on
+await chrome.storage.local.set({ settings: { detectHelper: true } });
+req('POST', 'https://claude.ai/api/organizations/0f8e2b7a-1111-2222-3333-444455556666/new_send?secret=1', 9);
+await settle();
+check('detection helper logs method + path, hides IDs and query', () => {
+  const last = local().log.at(-1).text;
+  assert.equal(last, 'POST claude.ai /api/organizations/:id/new_send');
+});
+await chrome.storage.local.set({ settings: {} });
 
 // 7. Manual +1 from a content script on a different site is refused; from our own page accepted
 const msg = (m, sender) => new Promise((r) => chrome.runtime.onMessage.ls[0](m, sender, r));
 assert.equal(await msg({ type: 'addPrompt', provider: 'claude' }, { tab: { url: 'https://evil.example/' }, url: 'https://evil.example/' }), false);
 assert.equal(await msg({ type: 'addPrompt', provider: 'claude' }, { url: 'chrome-extension://test/popup/popup.html' }), true);
 check('+1 is only accepted from Mothlight pages or the matching AI site', () => assert.equal(day().ai.claude.manual, 1));
+
+// 7b. Send-button reports (Claude/Gemini): only from the matching site; network + button for one prompt count once
+const geminiBefore = day().ai.gemini.detected;
+assert.equal(await msg({ type: 'promptSent', provider: 'gemini' }, { tab: { id: 20, url: 'https://evil.example/' } }), false);
+assert.equal(await msg({ type: 'promptSent', provider: 'gemini' }, { tab: { id: 20, url: 'https://gemini.google.com/app' } }), true);
+await settle();
+check('send-button report counts, and only from the AI site itself', () => assert.equal(day().ai.gemini.detected, geminiBefore + 1));
+now += 5000;
+const claudeBefore = day().ai.claude.detected;
+req('POST', 'https://claude.ai/api/organizations/o1/chat_conversations/c9/completion', 21);
+await msg({ type: 'promptSent', provider: 'claude' }, { tab: { id: 21, url: 'https://claude.ai/chat/c9' } });
+await settle();
+check('one prompt seen by both network and send button counts once', () => assert.equal(day().ai.claude.detected, claudeBefore + 1));
 
 // 8. Reminder after the interval of active time; muted during focus
 await chrome.storage.local.set({ settings: { intervalMin: 30 } });
@@ -133,6 +161,8 @@ for (let i = 0; i < 35; i++) await tick(60);
 check('no reminder during a focus session', () => assert.equal(state.notifications.length, 0));
 await msg({ type: 'focusStop' }, { url: 'chrome-extension://test/popup/popup.html' });
 check('focus session is logged', () => assert.equal(day().focus.sessions, 1));
+check('focus session records its screen time (35 min active in the browser)', () => assert.equal(day().focus.browser, 35 * 60));
+check('focus study timer is wall-clock time', () => assert.equal(day().focus.seconds, 35 * 60));
 for (let i = 0; i < 31; i++) await tick(60);
 check('reminder fires after 30 min of active time', () => assert.equal(state.notifications.length, 1));
 
