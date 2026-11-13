@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-378df0d0-27cb-4af8-b781-8be0a0eedd9e/styles.css">
+<script src="_ds/nocturne-378df0d0-27cb-4af8-b781-8be0a0eedd9e/_ds_bundle.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<style>body{margin:0;background:var(--color-bg)}a{color:var(--color-accent)}a:hover{color:var(--color-accent-300)}select.input{appearance:none}</style>
+</helmet>
+<div style="min-height:100vh;padding:48px 40px;display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start;background:radial-gradient(900px 500px at 15% 0%, var(--color-accent-900), transparent 70%), var(--color-bg);color:var(--color-text);font-family:var(--font-body)">
+
+  <!-- POPUP -->
+  <div data-screen-label="Popup" style="width:380px;height:600px;flex:none;display:flex;flex-direction:column;position:relative;overflow:hidden;border-radius:var(--radius-lg);background:linear-gradient(180deg, var(--color-surface), var(--color-bg) 55%);box-shadow:var(--shadow-md)">
+
+    <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-6) var(--space-2)">
+      <div style="position:relative;width:44px;height:36px;flex:none">
+        <div style="position:absolute;left:0;top:7px;width:20px;height:24px;border-radius:60% 30% 50% 60%;background:var(--color-accent-800);border:1px solid var(--color-accent-500);transform:rotate(-16deg)"></div>
+        <div style="position:absolute;right:0;top:7px;width:20px;height:24px;border-radius:30% 60% 60% 50%;background:var(--color-accent-800);border:1px solid var(--color-accent-500);transform:rotate(16deg)"></div>
+        <div style="position:absolute;left:15px;top:6px;width:14px;height:24px;border-radius:7px;background:var(--color-accent-300);box-shadow:0 0 14px var(--color-accent-600)"></div>
+        <div style="position:absolute;left:18px;top:13px;width:3px;height:3px;border-radius:50%;background:var(--color-neutral-900)"></div>
+        <div style="position:absolute;left:23px;top:13px;width:3px;height:3px;border-radius:50%;background:var(--color-neutral-900)"></div>
+        <div style="position:absolute;left:14px;top:0;width:1px;height:8px;background:var(--color-accent-400);transform:rotate(-25deg)"></div>
+        <div style="position:absolute;left:29px;top:0;width:1px;height:8px;background:var(--color-accent-400);transform:rotate(25deg)"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;margin-right:auto">
+        <div style="font-family:var(--font-heading);font-weight:500;font-size:16px;line-height:1.2">Mothlight</div>
+        <div style="font-size:11px;color:var(--color-neutral-500)">{{ moodLine }}</div>
+      </div>
+      <span class="tag tag-accent" style="gap:4px"><i class="ph-fill ph-fire"></i><span>{{ streakLabel }}</span></span>
+    </div>
+
+    <div style="display:flex;gap:var(--space-1);padding:var(--space-2) var(--space-6) 0">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+        <button class="btn" onClick="{{ t.go }}" style="flex:1;font-size:12px;padding:6px 4px;border-radius:0;border:none;border-bottom:1px solid {{ t.line }};color:{{ t.color }};gap:5px"><i class="ph {{ t.icon }}"></i>{{ t.label }}</button>
+      </sc-for>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6)">
+
+      <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:var(--space-6)">
+          <div style="width:96px;height:96px;flex:none;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--color-accent) {{ goalPct }}%, var(--color-neutral-800) 0)">
+            <div style="width:84px;height:84px;border-radius:50%;background:var(--color-bg);display:grid;place-items:center;text-align:center">
+              <div><div style="font-size:18px;font-weight:500;line-height:1">{{ goalPctLabel }}</div><div style="font-size:10px;color:var(--color-neutral-500)">of goal</div></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">Active today</div>
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:34px;line-height:1.05;letter-spacing:-.02em">{{ totalLabel }}</div>
+            <div style="font-size:12px;color:var(--color-neutral-400)">Goal: under {{ goal }}h · {{ leftLabel }}</div>
+          </div>
+        </div>
+
+        <div class="card elev-sm" style="flex-direction:row;align-items:center;gap:var(--space-3)">
+          <i class="ph {{ focusIcon }}" style="font-size:20px;color:var(--color-accent)"></i>
+          <div style="flex:1;display:flex;flex-direction:column">
+            <div style="font-size:13px;font-weight:500">{{ focusTitle }}</div>
+            <div style="font-size:11px;color:var(--color-neutral-500)">{{ focusSub }}</div>
+          </div>
+          <button class="btn btn-primary" onClick="{{ toggleFocus }}" style="font-size:12px">{{ focusBtn }}</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+          <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)"><span>Where it went</span><span style="display:flex;align-items:center;gap:4px;text-transform:none;letter-spacing:0"><i class="ph ph-pause-circle"></i>idle &amp; unfocused time skipped</span></div>
+          <sc-for list="{{ sites }}" as="s" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:110px 1fr 44px;align-items:center;gap:var(--space-3);font-size:12px">
+              <span style="display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis"><sc-if value="{{ s.ai }}" hint-placeholder-val="{{ false }}"><i class="ph-fill ph-sparkle" style="color:var(--color-accent)"></i></sc-if>{{ s.name }}</span>
+              <div style="height:6px;border-radius:3px;background:var(--color-neutral-900)"><div style="height:100%;border-radius:3px;width:{{ s.pct }}%;background:{{ s.fill }}"></div></div>
+              <span style="text-align:right;color:var(--color-neutral-400)">{{ s.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isAi }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-3)">
+          <div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">AI prompts today</div>
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:34px;line-height:1.05">{{ prompts }}</div>
+          </div>
+          <button class="btn btn-primary" onClick="{{ addPrompt }}" style="font-size:12px;white-space:nowrap"><i class="ph ph-plus"></i><span>1 prompt</span></button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)">
+          <sc-for list="{{ foot }}" as="f" hint-placeholder-count="3">
+            <div class="card elev-sm" style="gap:2px">
+              <i class="ph {{ f.icon }}" style="font-size:18px;color:var(--color-accent)"></i>
+              <div style="font-size:15px;font-weight:500;line-height:1.2;margin-top:4px">{{ f.value }}</div>
+              <div style="font-size:11px;color:var(--color-neutral-500)">{{ f.unit }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">Per-prompt figure</div>
+          <div class="seg" style="display:flex">
+            <sc-for list="{{ figs }}" as="o" hint-placeholder-count="3">
+              <label class="seg-opt" style="flex:1;justify-content:center;font-size:12px"><input type="radio" name="fig" checked="{{ o.on }}" onChange="{{ o.pick }}">{{ o.label }}</label>
+            </sc-for>
+          </div>
+          <div style="font-size:11px;line-height:1.5;color:var(--color-neutral-400);text-wrap:pretty">{{ figNote }}</div>
+        </div>
+
+        <div class="card" style="background:var(--color-accent-900);gap:4px">
+          <div class="card-kicker">In real life</div>
+          <div style="font-size:14px">{{ phoneLine }}</div>
+          <div style="font-size:11px;color:var(--color-accent-300)">{{ phoneMath }}</div>
+        </div>
+
+        <div style="display:flex;align-items:flex-start;gap:var(--space-2);font-size:12px;color:var(--color-neutral-400)"><i class="ph ph-leaf" style="font-size:16px;color:var(--color-accent)"></i><span style="text-wrap:pretty">Mo's tip: one clear prompt beats five quick retries — long answers and images cost far more.</span></div>
+      </sc-if>
+
+      <sc-if value="{{ isWeek }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end">
+          <div>
+            <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">This week</div>
+            <div style="font-family:var(--font-heading);font-weight:500;font-size:34px;line-height:1.05">24h 38m</div>
+          </div>
+          <span class="tag tag-accent" style="gap:4px"><i class="ph ph-trend-down"></i>12% vs last week</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:var(--space-3);height:150px;padding-top:var(--space-3);position:relative">
+          <div style="position:absolute;left:0;right:0;bottom:{{ goalLine }}%;height:1px;background:linear-gradient(to right, transparent, var(--color-accent-600) 48px, var(--color-accent-600) calc(100% - 48px), transparent)"></div>
+          <sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+            <div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px">
+              <div style="width:100%;height:{{ d.h }}%;border-radius:var(--radius-sm) var(--radius-sm) 2px 2px;background:{{ d.fill }};border:1px solid {{ d.edge }}"></div>
+              <span style="font-size:10px;color:{{ d.labelColor }}">{{ d.day }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:11px;color:var(--color-neutral-500);display:flex;align-items:center;gap:6px"><span style="width:14px;height:1px;background:var(--color-accent-600)"></span><span>{{ goalNote }}</span></div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-2)">
+          <div class="card elev-sm" style="gap:2px"><div style="font-size:11px;color:var(--color-neutral-500)">AI prompts</div><div style="font-size:18px;font-weight:500">86</div><div style="font-size:11px;color:var(--color-accent-300)">−9 vs last week</div></div>
+          <div class="card elev-sm" style="gap:2px"><div style="font-size:11px;color:var(--color-neutral-500)">AI energy</div><div style="font-size:18px;font-weight:500">8.6–29 Wh</div><div style="font-size:11px;color:var(--color-accent-300)">≈ 1–2 phone charges</div></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <div class="field"><label>Remind me after</label>
+          <div class="seg" style="display:flex">
+            <sc-for list="{{ intervals }}" as="o" hint-placeholder-count="4">
+              <label class="seg-opt" style="flex:1;justify-content:center;font-size:12px"><input type="radio" name="iv" checked="{{ o.on }}" onChange="{{ o.pick }}">{{ o.label }}</label>
+            </sc-for>
+          </div>
+        </div>
+        <div class="field"><label>Daily browsing goal</label>
+          <div class="seg" style="display:flex">
+            <sc-for list="{{ goals }}" as="o" hint-placeholder-count="3">
+              <label class="seg-opt" style="flex:1;justify-content:center;font-size:12px"><input type="radio" name="goal" checked="{{ o.on }}" onChange="{{ o.pick }}">{{ o.label }}</label>
+            </sc-for>
+          </div>
+        </div>
+        <div class="field"><label>Electricity grid (for CO₂e)</label>
+          <select class="input" value="{{ grid }}" onChange="{{ pickGrid }}">
+            <option value="NL">Netherlands · 270 g/kWh</option>
+            <option value="DE">Germany · 380 g/kWh</option>
+            <option value="FR">France · 50 g/kWh</option>
+            <option value="PL">Poland · 650 g/kWh</option>
+            <option value="SE">Sweden · 30 g/kWh</option>
+          </select>
+        </div>
+        <div class="card elev-sm" style="gap:var(--space-2)">
+          <div style="display:flex;align-items:center;gap:var(--space-2)"><i class="ph ph-lock-simple" style="font-size:18px;color:var(--color-accent)"></i><div class="card-title" style="font-size:14px">Your data stays here</div></div>
+          <div style="font-size:12px;color:var(--color-neutral-400);text-wrap:pretty">Stored in this browser only. No account, no server. Mothlight sees site names and that a prompt was sent — never what you typed.</div>
+          <div style="display:flex;gap:var(--space-2);font-size:11px;color:var(--color-neutral-500)"><span>{{ storedLabel }}</span><span>·</span><span>0 requests sent</span></div>
+          <div style="display:flex;gap:var(--space-2)">
+            <button class="btn btn-secondary" style="flex:1;font-size:12px"><i class="ph ph-download-simple"></i>Export JSON</button>
+            <button class="btn btn-secondary" onClick="{{ askDelete }}" style="flex:1;font-size:12px"><i class="ph ph-trash"></i>Delete all</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ confirming }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;inset:0;display:grid;place-items:center;padding:var(--space-6);background:color-mix(in srgb, var(--color-neutral-900) 70%, transparent)">
+        <div class="dialog">
+          <div class="dialog-title">Wipe everything?</div>
+          <div class="dialog-body">All tracked time, prompts and streaks are deleted from this browser. There's no copy anywhere else, so this can't be undone.</div>
+          <div class="dialog-actions">
+            <button class="btn btn-ghost" onClick="{{ cancelDelete }}">Keep</button>
+            <button class="btn btn-primary" onClick="{{ doDelete }}">Delete all</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- CONTEXT -->
+  <sc-if value="{{ showContext }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:40px;width:340px;max-width:100%">
+      <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+        <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">Reminder · every {{ intervalLabel }}</div>
+        <div data-screen-label="Notification" class="card elev-md" style="flex-direction:row;gap:var(--space-3);padding:var(--space-4)">
+          <div style="width:32px;height:32px;flex:none;border-radius:var(--radius-md);background:var(--color-accent-900);display:grid;place-items:center"><i class="ph-fill ph-moon-stars" style="color:var(--color-accent-300);font-size:18px"></i></div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:13px;font-weight:500">{{ notifTitle }}</div>
+            <div style="font-size:12px;color:var(--color-neutral-400)">Mo's wings are tired. Look away for 20 seconds?</div>
+            <div style="display:flex;gap:var(--space-2);margin-top:4px">
+              <button class="btn btn-primary" style="font-size:12px;padding:4px 10px;white-space:nowrap">Take a break</button>
+              <button class="btn btn-ghost" style="font-size:12px;white-space:nowrap">Snooze 15m</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+        <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-500)">Badge on AI sites</div>
+        <div data-screen-label="AI badge" style="border-radius:var(--radius-md);box-shadow:var(--shadow-sm);overflow:hidden">
+          <div style="display:flex;align-items:center;gap:var(--space-2);padding:6px 10px;background:var(--color-neutral-900);font-size:11px;color:var(--color-neutral-400)"><i class="ph ph-lock-simple"></i>chatgpt.com</div>
+          <div style="height:120px;position:relative;background:var(--color-bg)">
+            <div style="position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:var(--space-2);padding:5px 6px 5px 10px;border-radius:999px;background:var(--color-surface);box-shadow:var(--shadow-md);font-size:12px">
+              <span style="width:8px;height:8px;border-radius:50%;background:var(--color-accent-300);box-shadow:0 0 8px var(--color-accent)"></span>
+              <span>{{ prompts }} prompts · {{ badgeEnergy }}</span>
+              <button class="btn btn-primary" onClick="{{ addPrompt }}" style="font-size:11px;padding:2px 8px;border-radius:999px">+1</button>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--color-neutral-500);text-wrap:pretty">Counts that a prompt was sent — the text you type is never read.</div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showContext&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { tab: 'today', prompts: 14, fig: 'range', interval: 60, goal: 4, grid: 'NL', focus: false, secs: 0, confirming: false, wiped: false };
+  componentDidMount() { this.t = setInterval(() => { if (this.state.focus) this.setState(s => ({ secs: s.secs + 1 })); }, 1000); }
+  componentWillUnmount() { clearInterval(this.t); }
+  renderVals() {
+    const s = this.state, set = o => () => this.setState(o);
+    const f = n => n >= 10 ? n.toFixed(0) : n >= 1 ? n.toFixed(1) : n.toFixed(2);
+    const hm = m => `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+    const GRID = { NL: 0.27, DE: 0.38, FR: 0.05, PL: 0.65, SE: 0.03 }, g = GRID[s.grid];
+    const base = [['youtube.com', 58], ['docs.google.com', 46], ['chatgpt.com', 31, 1], ['instagram.com', 24], ['brightspace', 22], ['gemini.google.com', 11, 1]];
+    const sites = s.wiped ? [] : base;
+    const total = sites.reduce((a, x) => a + x[1], 0), max = 58;
+    const p = s.wiped ? 0 : s.prompts;
+    const pct = Math.min(100, Math.round(total / (s.goal * 60) * 100));
+    const left = s.goal * 60 - total;
+    const tabDefs = [['today', 'Today', 'ph-sun-horizon'], ['ai', 'AI', 'ph-sparkle'], ['week', 'Week', 'ph-chart-bar'], ['settings', '', 'ph-gear-six']];
+    const rng = (lo, hi) => `${f(lo)}–${f(hi)}`;
+    let energy, water, carbon, note, perE;
+    if (s.fig === 'range') { energy = rng(p * .10, p * .34); water = rng(p * .26, p * .32); carbon = rng(p * .10 * g, p * .34 * g); perE = .24;
+      note = 'Low 0.10 Wh (Google, chips only) → high 0.34 Wh (OpenAI average). Company figures, not independently checked; long answers and images cost more.'; }
+    else if (s.fig === 'gemini') { energy = f(p * .24); water = f(p * .26); carbon = f(p * .24 * g); perE = .24;
+      note = 'Gemini median text prompt: 0.24 Wh, 0.26 mL water (Google, Aug 2025). CO₂e uses your grid setting.'; }
+    else { energy = f(p * .34); water = f(p * .32); carbon = f(p * .34 * g); perE = .34;
+      note = 'ChatGPT average query: 0.34 Wh, 0.32 mL water (OpenAI CEO, June 2025). CO₂ not given — estimated from your grid.'; }
+    const e = p * perE, charges = e / 15;
+    const weekM = [150, 96, 230, 265, 205, 240, total], days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'], wmax = 300;
+    const ivs = [30, 60, 90, 120];
+    const ivLabel = s.interval >= 60 ? (s.interval === 60 ? '1 hour' : `${s.interval / 60} hours`) : `${s.interval} min`;
+    const mm = String(Math.floor(s.secs / 60)).padStart(2, '0'), ss = String(s.secs % 60).padStart(2, '0');
+    return {
+      tabs: tabDefs.map(([id, label, icon]) => ({ label, icon, go: set({ tab: id }), color: s.tab === id ? 'var(--color-accent)' : 'var(--color-neutral-500)', line: s.tab === id ? 'var(--color-accent)' : 'var(--color-neutral-800)' })),
+      isToday: s.tab === 'today', isAi: s.tab === 'ai', isWeek: s.tab === 'week', isSettings: s.tab === 'settings',
+      moodLine: s.wiped ? 'Fresh start. Hi again!' : s.focus ? 'Shh… Mo is guarding your focus' : pct < 90 ? 'Mo is calm — nice pace today' : 'Mo is getting dizzy from the glow',
+      streakLabel: `${s.wiped ? 0 : 6}-day streak`, goalNote: `Your ${s.goal}h goal · under it 5 of 7 days`, goal: s.goal, goalPct: pct, goalPctLabel: pct + '%', totalLabel: hm(total),
+      leftLabel: left >= 0 ? `${hm(left)} left` : `${hm(-left)} over`,
+      focusIcon: s.focus ? 'ph-timer' : 'ph-moon', focusTitle: s.focus ? `Focus · ${mm}:${ss}` : 'Focus session',
+      focusSub: s.focus ? 'Reminders muted, session tracked' : 'Mutes reminders while you study', focusBtn: s.focus ? 'End' : 'Start',
+      toggleFocus: () => this.setState(x => ({ focus: !x.focus, secs: 0 })),
+      sites: sites.map(([name, m, ai]) => ({ name, ai: !!ai, pct: Math.round(m / max * 100), label: m + 'm', fill: ai ? 'var(--color-accent)' : 'var(--color-neutral-600)' })),
+      prompts: p, addPrompt: () => this.setState(x => ({ prompts: (x.wiped ? 0 : x.prompts) + 1, wiped: false })),
+      foot: [{ icon: 'ph-lightning', value: energy, unit: 'Wh energy' }, { icon: 'ph-cloud', value: carbon, unit: 'g CO₂e' }, { icon: 'ph-drop', value: water, unit: 'mL water' }],
+      figs: [['range', 'Range'], ['gemini', 'Gemini'], ['chatgpt', 'ChatGPT']].map(([id, label]) => ({ label, on: s.fig === id, pick: set({ fig: id }) })),
+      figNote: note,
+      phoneLine: `≈ ${charges.toFixed(2)} phone charges today`,
+      phoneMath: `${p} prompts × ${perE} Wh = ${f(e)} Wh ÷ 15 Wh per full charge`,
+      badgeEnergy: s.fig === 'range' ? `${rng(p * .10, p * .34)} Wh` : `${energy} Wh`,
+      week: weekM.map((m, i) => ({ day: days[i], h: Math.round(m / wmax * 100), fill: i === 6 ? 'var(--color-accent-800)' : 'var(--color-neutral-900)', edge: i === 6 ? 'var(--color-accent)' : (m > s.goal * 60 ? 'var(--color-neutral-500)' : 'var(--color-neutral-800)'), labelColor: i === 6 ? 'var(--color-accent)' : 'var(--color-neutral-500)' })),
+      goalLine: Math.round(s.goal * 60 / wmax * 100),
+      intervals: ivs.map(v => ({ label: v < 60 ? v + 'm' : v / 60 + 'h', on: s.interval === v, pick: set({ interval: v }) })),
+      goals: [3, 4, 5].map(v => ({ label: v + 'h', on: s.goal === v, pick: set({ goal: v }) })),
+      grid: s.grid, pickGrid: ev => this.setState({ grid: ev.target.value }),
+      storedLabel: s.wiped ? '0 KB stored' : '38 KB stored',
+      confirming: s.confirming, askDelete: set({ confirming: true }), cancelDelete: set({ confirming: false }),
+      doDelete: set({ confirming: false, wiped: true, prompts: 0, focus: false }),
+      showContext: this.props.showContext ?? true, intervalLabel: ivLabel,
+      notifTitle: `You've been online for ${ivLabel}`,
+    };
+  }
+}
+</script>
+</body>
+</html>
