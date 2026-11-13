@@ -1,0 +1,10 @@
+06 - Office Secrets
+Category: Forensics   Level: Easy   Points: 100
+------------------------------------------------------------
+The finance team sent this budget spreadsheet to everyone in the company.
+They say it "only contains the public numbers". Companies leak secrets this
+way more often than you would think.
+
+File: budget_2026.xlsx  (Excel, LibreOffice Calc or Google Sheets)
+
+Goal: find the flag that should never have been sent.

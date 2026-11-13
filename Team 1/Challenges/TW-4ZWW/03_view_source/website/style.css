@@ -1,0 +1,14 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; color: #1d232b; background: #f4f1ea; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 18px 32px; background: #2f3b2f; color: #fff; }
+.logo { font-weight: 800; font-size: 22px; } .logo span { color: #c9b27c; margin-left: 4px; }
+nav a { color: #fff; margin-left: 18px; text-decoration: none; }
+.hero { padding: 80px 32px; text-align: center; background: linear-gradient(#5d6f55, #2f3b2f); color: #fff; }
+.hero h1 { font-size: 40px; margin: 0 0 12px; }
+.btn { display: inline-block; margin-top: 18px; padding: 12px 22px; background: #c9b27c; color: #1d232b; border-radius: 8px; text-decoration: none; font-weight: 700; }
+.plans { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; padding: 48px 16px; }
+.plan { background: #fff; border-radius: 12px; padding: 22px; width: 240px; box-shadow: 0 2px 8px #0002; }
+.plan.featured { outline: 3px solid #c9b27c; }
+.price { font-size: 24px; font-weight: 700; }
+.about, .contact { max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+footer { text-align: center; padding: 24px; color: #666; }

@@ -1,0 +1,10 @@
+14 - Sound Picture
+Category: Forensics   Level: Medium   Points: 150
+------------------------------------------------------------
+The campus radio club picked up a strange transmission. It sounds like
+a broken modem having a bad day. One of the members says: "Don't listen
+to it. LOOK at it."
+
+File: transmission.wav   (turn your volume down first!)
+
+Goal: find the flag hidden in the sound.

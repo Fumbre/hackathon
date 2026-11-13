@@ -1,0 +1,15 @@
+07 - Admin Panel
+Category: Web   Level: Medium   Points: 150
+------------------------------------------------------------
+Hunebed Hosting built a "secure" admin panel for its staff. You only have
+the guest account that was printed on a sticky note:
+
+    username: guest
+    password: guest
+
+The admin area is locked for guests. The developer says the session is
+"encrypted, so nobody can change it". Is that true?
+
+File: panel/index.html  (open it in your browser, it works offline)
+
+Goal: get into the admin area and read the flag.

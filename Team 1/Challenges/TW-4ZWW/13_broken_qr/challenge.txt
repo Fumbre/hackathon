@@ -1,0 +1,11 @@
+13 - Broken QR
+Category: Misc   Level: Medium   Points: 150
+------------------------------------------------------------
+We found this QR code on a poster, but someone cut out its three big
+corner squares. No phone can scan it anymore. The rest of the code is
+still perfect.
+
+File: damaged_qr.png   (every small square is exactly 20 x 20 pixels,
+                        and there is a white border of 4 squares around it)
+
+Goal: repair the QR code, scan it and read the flag.

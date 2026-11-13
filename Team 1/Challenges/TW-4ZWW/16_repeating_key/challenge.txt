@@ -1,0 +1,14 @@
+16 - Repeating Key
+Category: Crypto   Level: Hard   Points: 250
+------------------------------------------------------------
+The radio club intercepted an encrypted message between two (made-up)
+smugglers. Their encryption program is simple: it XORs every byte of the
+English message with a password that is repeated over and over. The
+password is somewhere between 6 and 16 letters long. We do not know it.
+
+Files: intercepted.bin   (the raw encrypted bytes)
+       intercepted.hex   (the same bytes written as hex text, handy for
+                          CyberChef or Python)
+
+Goal: break the encryption without knowing the password and find the flag
+inside the message.

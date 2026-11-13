@@ -1,0 +1,9 @@
+02 - Layers
+Category: Encoding   Level: Easy   Points: 100
+------------------------------------------------------------
+We intercepted a message that is wrapped in three layers, like an onion.
+None of the layers is real encryption - just encodings you can undo.
+
+File: message.txt
+
+Goal: peel off all three layers to get the flag.

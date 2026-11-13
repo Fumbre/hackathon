@@ -1,0 +1,10 @@
+08 - Heavy Photo
+Category: Forensics   Level: Medium   Points: 150
+------------------------------------------------------------
+Someone posted this photo of the campus at night. It looks normal, but a
+photo of this size should be much smaller than this file is. Something
+extra is riding along.
+
+File: campus_night.jpg
+
+Goal: find what is hidden inside the photo and get the flag out of it.

@@ -1,0 +1,9 @@
+05 - Wrong Extension
+Category: Forensics   Level: Easy   Points: 100
+------------------------------------------------------------
+We found a file called notes.txt on a USB stick, but when we open it in
+Notepad we only see garbage. Is it really a text file?
+
+File: notes.txt
+
+Goal: find out what this file really is, open it properly and read the flag.

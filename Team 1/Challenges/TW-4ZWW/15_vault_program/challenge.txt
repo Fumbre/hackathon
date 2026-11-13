@@ -1,0 +1,31 @@
+15 - Vault Program
+Category: Reversing   Level: Hard   Points: 250
+------------------------------------------------------------
+Hunebed Hosting keeps its backup codes in a small "vault" program. It asks
+for an unlock code and only says "Access granted" for the right one.
+The unlock code IS the flag. Guessing will not work, so look inside the
+program instead.
+
+Files (the same program, pick the one you like):
+  vault.exe      Windows version
+  vault_linux    Linux version (to run it: chmod +x vault_linux)
+
+You do NOT need to run the program. A decompiler turns it back into
+readable C-like code, on any computer:
+  - Ghidra (free, ghidra-sre.org, Windows/Mac/Linux), or
+  - dogbolt.org (in the browser, upload the file, nothing to install)
+
+Setting up Ghidra (see also the leaflet):
+  1. Install the Java JDK that your Ghidra version asks for. Ghidra 12.x
+     needs JDK 25 (adoptium.net). Java 21 is too old for Ghidra 12.
+     Windows: winget install EclipseAdoptium.Temurin.25.JDK
+  2. Download the Ghidra zip, unzip it, start ghidraRun.bat (Windows)
+     or ./ghidraRun (Mac/Linux).
+  3. File -> New Project -> Non-Shared Project -> any folder and name.
+  4. File -> Import File -> pick the program -> OK.
+  5. Double-click the program in the project, answer Yes to "Analyze?",
+     then click Analyze and wait until the bar at the bottom right is done.
+  6. Left side: Symbol Tree -> Functions -> main. The Decompile window
+     on the right shows the program as C code.
+
+Goal: understand how the program checks the code and work out the flag.

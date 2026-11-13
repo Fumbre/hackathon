@@ -1,0 +1,17 @@
+09 - Sensor Log
+Category: Data   Level: Medium   Points: 150
+------------------------------------------------------------
+The campus has wireless temperature sensors that send their readings over a
+slow LoRa radio network. Readings often arrive late and out of order.
+
+Yesterday sensor TH-13 (server room) was switched into calibration mode
+(mode CAL). In that mode it sends ONE character per reading in the "diag"
+column. Read those characters in the order they were MEASURED (not the
+order they were received) and you get a message.
+
+File: sensor_log.csv  (Excel, LibreOffice Calc or Google Sheets)
+
+Goal: rebuild the message from TH-13 and find the flag.
+
+Tip for Excel with Dutch settings: if everything ends up in column A, use
+Data -> From Text/CSV and choose "Comma" as the delimiter.

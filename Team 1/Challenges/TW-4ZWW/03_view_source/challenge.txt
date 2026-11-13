@@ -1,0 +1,10 @@
+03 - View Source
+Category: Web   Level: Easy   Points: 100
+------------------------------------------------------------
+Hunebed Hosting (a made-up company) just launched its new website.
+The developer says "everything secret was removed before launch".
+Was it?
+
+Files: website/index.html (open it in your browser), website/style.css
+
+Goal: find the flag that the developer forgot about.

@@ -1,0 +1,14 @@
+12 - Network Capture
+Category: Network   Level: Medium   Points: 150
+------------------------------------------------------------
+We recorded the network traffic of a laptop on the (made-up) office
+network while someone browsed the internal file server. Everything went
+over plain HTTP, without encryption. Files that travel over the network
+can be rebuilt from a capture like this.
+
+File: office_traffic.pcap
+
+Tool: Wireshark (free, wireshark.org, for Windows, Mac and Linux)
+
+Goal: find the file that was downloaded from the file server and read
+the flag in it.

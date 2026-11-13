@@ -1,0 +1,18 @@
+20 - Tiny Machine
+Category: Reversing   Level: Boss   Points: 400
+------------------------------------------------------------
+The final boss. This program does not check your code with normal C code.
+It contains its own tiny made-up computer (a "virtual machine") with its
+own instructions. The real check is a little program for that machine,
+stored as a list of bytes inside the file.
+
+Files (the same program, pick the one you like):
+  tinymachine.exe      Windows version
+  tinymachine_linux    Linux version (to run it: chmod +x tinymachine_linux)
+
+You do NOT need to run it. Open it in Ghidra (how to set it up: see
+challenge 15, Ghidra 12.x needs Java JDK 25) or upload it to dogbolt.org.
+
+Goal: figure out what each instruction of the tiny machine does, read
+the byte program, and work backwards to the code it accepts. That code
+is the flag.

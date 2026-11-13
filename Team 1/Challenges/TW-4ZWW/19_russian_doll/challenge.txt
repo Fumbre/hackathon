@@ -1,0 +1,10 @@
+19 - Russian Doll
+Category: Forensics   Level: Very hard   Points: 300
+------------------------------------------------------------
+This poster for the campus radio club looks innocent. A member of the
+club says it is "a puzzle box with three locks". Each step gives you
+the key to the next one.
+
+File: radio_club_poster.png
+
+Goal: open all the locks and find the flag.

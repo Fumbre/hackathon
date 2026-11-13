@@ -1,0 +1,16 @@
+18 - Lazy Randomness
+Category: Crypto   Level: Very hard   Points: 300
+------------------------------------------------------------
+A cheap brand of (made-up) smart routers makes its own RSA key the first
+time it boots. Its random number generator is so bad that some routers
+end up with keys that have a prime number in common.
+
+We collected the public keys of four routers and one encrypted message
+that was sent to router C. RSA keys with 2048 bits are far too big to
+factor... normally.
+
+Files: keys/router_A.pem ... keys/router_D.pem   (RSA public keys)
+       message_for_C.txt                         (the encrypted message)
+
+Goal: break router C's key and decrypt the message.
+(The message was encrypted with "textbook" RSA: c = m^e mod n, no padding.)

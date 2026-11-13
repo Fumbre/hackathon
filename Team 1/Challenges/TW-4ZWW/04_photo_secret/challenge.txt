@@ -1,0 +1,10 @@
+04 - Photo Secret
+Category: Forensics   Level: Easy   Points: 100
+------------------------------------------------------------
+A student posted this holiday photo of a hunebed (a stone-age tomb) online.
+Photos often carry hidden information about the camera, the place and the
+time... and sometimes much more.
+
+File: hunebed.jpg
+
+Goal: find the flag hidden in the photo. (It is not drawn in the picture.)

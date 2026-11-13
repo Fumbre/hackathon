@@ -1,0 +1,13 @@
+11 - Suspicious Mail
+Category: Forensics   Level: Medium   Points: 150
+------------------------------------------------------------
+An employee of Hunebed Hosting (a made-up company) forwarded this email to
+the security team: "Is this real? It looks like it comes from our IT
+department." It is a training example: every address and link in it is
+fake (they end in .invalid, which can never exist on the internet).
+
+File: urgent_password_expiry.eml  (open it in Outlook, Apple Mail or
+Thunderbird, or just in a text editor - an .eml file is plain text)
+
+Goal: find out who really sent it and where the button REALLY points to.
+The flag is hidden in that real link.

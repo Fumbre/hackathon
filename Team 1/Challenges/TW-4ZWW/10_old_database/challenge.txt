@@ -1,0 +1,14 @@
+10 - Old Database
+Category: Data   Level: Medium   Points: 150
+------------------------------------------------------------
+Hunebed Hosting moved to a new system and left its old helpdesk database
+on a shared drive. The new admin claims "there is nothing sensitive left
+in it". Read the tickets: somebody moved something they should not have.
+
+File: helpdesk.db  (an SQLite database)
+
+Free viewer that works on Windows, Mac and Linux: DB Browser for SQLite
+(sqlitebrowser.org). Use "Browse Data" to look around and "Execute SQL"
+to run queries.
+
+Goal: find the flag. You will need at least one small SQL query.

@@ -1,0 +1,16 @@
+17 - Deleted Branch
+Category: Forensics   Level: Hard   Points: 250
+------------------------------------------------------------
+A developer at Hunebed Hosting (a made-up company) put a secret deploy key
+in a separate branch "just for a quick test", then panicked and deleted
+the whole branch. "It's gone now," they said.
+
+Folder: website_repo/   (a git repository - the hidden .git folder inside
+                         it holds the whole history)
+
+Tool: git (Windows: git-scm.com, Mac: run 'git' once and accept the
+Xcode tools install, Linux: sudo apt install git)
+
+Goal: find the deploy key that was on the deleted branch.
+(Careful: the history of main also contains an old, revoked key. That
+one is not the flag.)

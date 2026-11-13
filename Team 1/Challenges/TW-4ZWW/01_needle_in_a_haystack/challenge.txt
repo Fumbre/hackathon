@@ -1,0 +1,9 @@
+01 - Needle in a Haystack
+Category: Misc   Level: Easy   Points: 100
+------------------------------------------------------------
+Our intern dumped 5,000 lines of "backup notes" into one file.
+Somewhere in there is a single line that matters.
+
+File: haystack.txt
+
+Goal: find the flag (it looks like TW{...}).
