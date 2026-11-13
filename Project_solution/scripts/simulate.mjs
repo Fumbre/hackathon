@@ -157,12 +157,39 @@ await chrome.storage.local.set({ reminder: { activeSec: 0, snoozeUntil: 0 } });
 state.tab = { id: 6, url: 'https://github.com/', audible: false, active: true };
 chrome.tabs.onActivated.fire({ tabId: 6 }); await settle();
 await msg({ type: 'focusStart' }, { url: 'chrome-extension://test/popup/popup.html' });
-for (let i = 0; i < 35; i++) await tick(60);
+for (let i = 0; i < 20; i++) await tick(60);                                   // 20 min on GitHub
+state.focused = false; chrome.windows.onFocusChanged.fire(-1); await settle();
+for (let i = 0; i < 10; i++) await tick(60);                                   // 10 min in another app
+state.focused = true; chrome.windows.onFocusChanged.fire(1); await settle();
+state.idle = 'idle';
+for (let i = 0; i < 5; i++) await tick(60);                                    // 5 min away from the keyboard
+state.idle = 'active'; chrome.idle.onStateChanged.fire('active'); await settle();
+now += 9 * 60_000; await tick(60);                                             // laptop asleep 9 min (+1 counted)
+for (let i = 0; i < 4; i++) await tick(60);                                    // 4 more min on GitHub
+state.tab = { id: 7, url: 'https://stackoverflow.com/questions/1', audible: false, active: true };
+chrome.tabs.onActivated.fire({ tabId: 7 }); await settle();
+for (let i = 0; i < 10; i++) await tick(60);                                   // 10 min on Stack Overflow
+check('focus session tracks where the time went while it runs', () => {
+  const f = local().focus;
+  assert.equal(f.sites['github.com'], 25 * 60);
+  assert.equal(f.away.unfocused, 600);
+});
+state.tab = { id: 6, url: 'https://github.com/', audible: false, active: true };
+chrome.tabs.onActivated.fire({ tabId: 6 }); await settle();
 check('no reminder during a focus session', () => assert.equal(state.notifications.length, 0));
 await msg({ type: 'focusStop' }, { url: 'chrome-extension://test/popup/popup.html' });
 check('focus session is logged', () => assert.equal(day().focus.sessions, 1));
 check('focus session records its screen time (35 min active in the browser)', () => assert.equal(day().focus.browser, 35 * 60));
-check('focus study timer is wall-clock time', () => assert.equal(day().focus.seconds, 35 * 60));
+check('focus study timer is wall-clock time (59 min)', () => assert.equal(day().focus.seconds, 59 * 60));
+check('finished session: time per site', () =>
+  assert.deepEqual(local().focusSessions[0].sites, { 'github.com': 25 * 60, 'stackoverflow.com': 10 * 60 }));
+check('finished session: time away, by reason (other app, idle, asleep)', () =>
+  assert.deepEqual(local().focusSessions[0].away, { unfocused: 600, idle: 300, off: 540 }));
+check('finished session: sites + away = the whole session', () => {
+  const s = local().focusSessions[0];
+  const sum = [...Object.values(s.sites), ...Object.values(s.away)].reduce((a, b) => a + b, 0);
+  assert.equal(sum, (s.end - s.start) / 1000);
+});
 for (let i = 0; i < 31; i++) await tick(60);
 check('reminder fires after 30 min of active time', () => assert.equal(state.notifications.length, 1));
 

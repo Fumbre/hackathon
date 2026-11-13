@@ -3,9 +3,9 @@
 import { AI_HOST_PATTERNS } from './ai-sites';
 import { api } from './browser';
 import { dayKey, lastDays } from './dates';
-import { bytesStored, getDays, getFocus, getLog, getReminder, getSettings } from './storage';
+import { bytesStored, getDays, getFocus, getFocusSessions, getLog, getReminder, getSettings } from './storage';
 import { streak } from './stats';
-import type { DayBucket, FocusState, LogEvent, ReminderState, Settings } from './types';
+import type { DayBucket, FocusSession, FocusState, LogEvent, ReminderState, Settings } from './types';
 import { send } from './ui';
 
 export interface Model {
@@ -15,6 +15,8 @@ export interface Model {
   days: Record<string, DayBucket>;
   settings: Settings;
   focus: FocusState;
+  /** Finished focus sessions, oldest first. */
+  sessions: FocusSession[];
   reminder: ReminderState;
   streak: number;
   bytes: number;
@@ -27,10 +29,11 @@ export async function loadModel(opts: { flush?: boolean } = {}): Promise<Model> 
   // Ask the background to write the time counted so far, so the numbers are up to the second.
   if (opts.flush) await send({ type: 'flush' }).catch(() => undefined);
   const keys = lastDays(60);
-  const [days, settings, focus, reminder, bytes, log, aiAccess] = await Promise.all([
+  const [days, settings, focus, sessions, reminder, bytes, log, aiAccess] = await Promise.all([
     getDays(keys),
     getSettings(),
     getFocus(),
+    getFocusSessions(),
     getReminder(),
     bytesStored(),
     getLog(),
@@ -43,6 +46,7 @@ export async function loadModel(opts: { flush?: boolean } = {}): Promise<Model> 
     days,
     settings,
     focus,
+    sessions,
     reminder,
     streak: streak(days, settings.goalHours),
     bytes,

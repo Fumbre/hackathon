@@ -16,6 +16,7 @@ import { api } from '../lib/browser';
 import { dayKey, nextMidnight } from '../lib/dates';
 import { appendLog, getSegment, getStatus, setSegment, setStatus, updateDay, withLock } from '../lib/storage';
 import type { TrackStatus } from '../lib/types';
+import { accountFocus } from './focus';
 import { onActiveSeconds } from './reminders';
 
 /** After this many seconds without keyboard/mouse input the system counts as idle. */
@@ -94,11 +95,12 @@ export function evaluate(): Promise<void> {
     const end = obs.status === 'idle' || obs.status === 'locked' ? now - IDLE_SECONDS * 1000 : now;
     const seg = await getSegment();
     const counted = await closeSegment(Math.max(end, seg?.start ?? end));
+    const prev = await getStatus();
+    await accountFocus(now, seg?.host ?? null, counted, prev, obs.status);
     if (counted > 0) await onActiveSeconds(counted);
 
     if (obs.status === 'active' && obs.host) await setSegment({ host: obs.host, start: now });
 
-    const prev = await getStatus();
     if (prev !== obs.status) {
       await setStatus(obs.status);
       if (obs.status === 'active' && prev !== 'no-site') await appendLog('resume', 'Counting again');

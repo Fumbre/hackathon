@@ -81,3 +81,7 @@ AI really runs in data centres whose location we don't know, so for AI this is a
 - **Exception:** a tab that is **playing sound** (a lecture video) keeps counting while you're idle.
 - **Sleep:** if the laptop sleeps, the gap is not counted (at most one heartbeat, 60 s).
 - Time is split at midnight into the right day.
+- **Focus sessions:** the study timer is wall-clock time from **Start** to **End**. Within it, every minute is either
+  *active on a website* (the same rules as above) or *away*, and the away time keeps the reason the tracker saw:
+  another app in front, away from the keyboard (including the 60 s idle minute), screen locked, a browser page
+  (new tab, settings) or no heartbeat for over 2.5 min (browser closed or laptop asleep). So sites + away ≈ the whole session.

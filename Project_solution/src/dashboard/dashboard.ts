@@ -25,6 +25,7 @@ import * as mo from '../lib/mo';
 import { exportAll, saveSettings } from '../lib/storage';
 import { activeSeconds, aiSeconds, pctChange, promptTotals, sumDays, topSites } from '../lib/stats';
 import type { FigureChoice, HostStats, LogKind } from '../lib/types';
+import { AWAY, breakdown, liveSession, rowsHtml, stackBar, summaryLine, type Breakdown } from '../lib/sessions';
 import { $, downloadJson, esc, fmtBytes, moHtml, send } from '../lib/ui';
 
 let m: Model;
@@ -112,6 +113,60 @@ function ratioLine(laptopWh: number, ai: [number, number]): string {
   const hi = laptopWh / Math.max(ai[0], 1e-9);
   if (lo >= 1) return `Today your laptop used <strong>${fmtRange([lo, hi])}×</strong> more energy than your AI prompts.`;
   return `Today your AI prompts used <strong>${fmtRange([ai[0] / laptopWh, ai[1] / laptopWh])}×</strong> more energy than your laptop.`;
+}
+
+// ── Focus sessions: where the time went between Start and End ──
+function sessionTitle(b: Breakdown): string {
+  const d = new Date(b.start);
+  const date = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  return `${date} · ${fmtClock(b.start)}–${fmtClock(b.end)}`;
+}
+
+function sessionCard(b: Breakdown, live: boolean): string {
+  return `<div class="card elev-sm panel session${live ? ' live' : ''}">
+    <div class="row" style="justify-content:space-between;gap:var(--space-3)">
+      <div class="col" style="gap:2px">
+        <div class="card-kicker">${live ? '<i class="ph-fill ph-circle icon-accent" style="font-size:8px"></i> Running now' : sessionTitle(b)}</div>
+        <div class="card-title">${fmtDuration(b.total)} of focus</div>
+      </div>
+      <div class="faint" style="font-size:13px;text-align:right">${summaryLine(b)}</div>
+    </div>
+    ${stackBar(b)}
+    <div class="col" style="gap:6px">${b.rows.length ? rowsHtml(b, { notes: true }) : '<p class="faint">Nothing counted yet. It fills in every minute.</p>'}</div>
+  </div>`;
+}
+
+function renderFocus() {
+  const finished = m.sessions.slice().reverse().map((s) => breakdown(s));
+  const live = m.focus.active ? breakdown(liveSession(m.focus)) : null;
+  const week = finished.filter((b) => b.start >= Date.now() - 7 * 86400_000);
+  const wTotal = week.reduce((a, b) => a + b.total, 0);
+  const wBrowser = week.reduce((a, b) => a + b.browser, 0);
+  const wAway: Record<string, number> = {};
+  for (const b of week) for (const r of b.rows) if (r.kind === 'away') wAway[r.key] = (wAway[r.key] ?? 0) + r.secs;
+  const topAway = Object.entries(wAway).sort((a, b) => b[1] - a[1])[0];
+
+  $('#focus').innerHTML = `
+    <h2>Focus sessions</h2>
+    <p class="section-lead">Where your time went between <strong>Start</strong> and <strong>End</strong>: the websites you were active on, and the time you were away from the browser (another app, away from the keyboard, screen locked). Only site names are kept, as everywhere else.</p>
+    ${
+      week.length
+        ? `<div class="kpis">
+      ${kpi('ph-timer', 'Focus this week', fmtDuration(wTotal), `${week.length} session${week.length === 1 ? '' : 's'}`)}
+      ${kpi('ph-globe-simple', 'In the browser', fmtDuration(wBrowser), `${Math.round((wBrowser / Math.max(1, wTotal)) * 100)}% of your focus time`)}
+      ${kpi('ph-book-open-text', 'Away from the browser', fmtDuration(wTotal - wBrowser), topAway ? `mostly: ${AWAY[topAway[0] as keyof typeof AWAY].label.toLowerCase()}` : 'none')}
+    </div>`
+        : ''
+    }
+    ${live ? sessionCard(live, true) : ''}
+    ${
+      finished.length
+        ? finished.slice(0, 10).map((b) => sessionCard(b, false)).join('')
+        : live
+          ? ''
+          : '<div class="card panel"><p class="faint" style="margin:0">No focus sessions yet. Press <strong>Start</strong> on the Today tab of the popup, study, then press <strong>End</strong>: the breakdown appears here.</p></div>'
+    }
+    ${finished.length > 10 ? `<p class="faint" style="font-size:12px">Showing the last 10 of ${finished.length} stored sessions.</p>` : ''}`;
 }
 
 // ── Trends ──
@@ -445,6 +500,7 @@ function render() {
   renderHeader();
   renderToday();
   renderTrends();
+  renderFocus();
   renderAi();
   renderReceipt();
   renderPrivacy();

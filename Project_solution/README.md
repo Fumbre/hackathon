@@ -44,7 +44,7 @@ Pin Mothlight to the toolbar (puzzle-piece icon → pin) and browse as usual.
 - **Laptop vs AI:** we also estimate your *own laptop's* energy (watts × active time, with your country's grid). The result surprises most people: the screen time itself usually outweighs the AI prompts.
 - **Today's receipt:** the day itemised like a shop receipt, with phone charges, LED-bulb minutes and teaspoons of water, and the maths shown next to it.
 - **Prompt-cost badge** on AI sites, showing today's running total with a **+1** button. It sits inside a closed Shadow DOM and reads nothing from the page.
-- **Focus sessions:** a study timer that mutes reminders and is logged.
+- **Focus sessions:** a study timer that mutes reminders. When you press **End** you see where the time went: each website you were active on, and the time away from the browser (another app in front, away from the keyboard, screen locked, browser closed or laptop asleep). The dashboard's *Focus sessions* section keeps the last 50.
 - **Goals & streaks:** "under 4 h today", with a day streak and your best streak.
 - **Privacy page with a live log** of exactly what was recorded ("Prompt detected · Claude · 14:02", "Paused: browser not in focus").
 - **Mo the moth** has a mood line and a glow that react to your day, plus tips based on your own numbers.
@@ -55,7 +55,7 @@ Pin Mothlight to the toolbar (puzzle-piece icon → pin) and browse as usual.
 
 | Permission | Why | What it can see |
 |---|---|---|
-| `storage` | Keep your numbers | Day totals, settings and the log, in this browser only |
+| `storage` | Keep your numbers | Day totals, focus sessions, settings and the log, in this browser only |
 | `tabs` | Which site is active | The active tab's address, of which **only the hostname** is kept (`docs.google.com`) |
 | `idle` | Stop counting when you step away | Only "active", "idle" or "locked" |
 | `alarms` | 1-minute heartbeat | Nothing. It is a timer |
@@ -97,7 +97,7 @@ Project_solution/
 | `npm run build` | Builds both browsers into `dist/` |
 | `npm run watch` | Rebuilds on change |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Builds both, then runs `scripts/simulate.mjs` (19 checks of the real background script: focus, idle, audible, sleep, midnight, detection, reminders, wipe) and `scripts/test-content.mjs` (12 checks of the Send-button detector on the real Claude/Gemini markup, including proof it never reads the chat box) |
+| `npm test` | Builds both, then runs `scripts/simulate.mjs` (23 checks of the real background script: focus sessions and their breakdown, idle, audible, sleep, midnight, detection, reminders, wipe) and `scripts/test-content.mjs` (12 checks of the Send-button detector on the real Claude/Gemini markup, including proof it never reads the chat box) |
 | `npm run lint:firefox` | Mozilla's `web-ext lint` |
 | `npm run run:firefox` | Opens Firefox with the extension loaded |
 | `npm run zip` | Builds `release/mothlight-{chrome,firefox}-*.zip` |

@@ -3,10 +3,10 @@
 
 import { OTHER_PROVIDER_ID, providerById, providerForHost } from '../lib/ai-sites';
 import { api } from '../lib/browser';
-import { dayKey, fmtDuration } from '../lib/dates';
-import { appendLog, getFocus, getReminder, setFocus, setReminder, updateDay, wipeAll, withLock } from '../lib/storage';
+import { appendLog, getFocus, wipeAll, withLock } from '../lib/storage';
 import type { Message } from '../lib/types';
 import { detected, detectStats, recordPrompt } from './ai-detector';
+import { startFocus, stopFocus } from './focus';
 import { snooze } from './reminders';
 import { evaluate, hostOf } from './tracker';
 
@@ -46,27 +46,16 @@ async function handle(msg: Message, sender: chrome.runtime.MessageSender): Promi
 
   switch (msg.type) {
     case 'focusStart':
+      await evaluate(); // close the time counted so far, so it doesn't leak into the session
       return withLock(async () => {
-        await setFocus({ active: true, start: Date.now(), browserSec: 0 });
-        await appendLog('focus', 'Focus session started: reminders muted');
+        if (!(await getFocus()).active) await startFocus(Date.now());
         return true;
       });
 
     case 'focusStop':
-      await evaluate(); // count the browsing time up to this second first
+      await evaluate(); // count the time up to this second first
       return withLock(async () => {
-        const f = await getFocus();
-        if (!f.active) return true;
-        const secs = Math.round((Date.now() - f.start) / 1000);
-        await updateDay(dayKey(), (d) => {
-          d.focus.sessions++;
-          d.focus.seconds += secs;
-          d.focus.browser = Math.round((d.focus.browser ?? 0) + (f.browserSec ?? 0));
-        });
-        await setFocus({ active: false, start: 0, browserSec: 0 });
-        const r = await getReminder();
-        await setReminder({ ...r, activeSec: 0 }); // you were studying: start the break timer fresh
-        await appendLog('focus', `Focus session ended after ${Math.round(secs / 60)} min (${fmtDuration(f.browserSec ?? 0)} of it in the browser)`);
+        await stopFocus(Date.now());
         return true;
       });
 
