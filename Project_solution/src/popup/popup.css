@@ -1,0 +1,34 @@
+html, body { margin: 0; background: var(--color-bg); }
+.popup {
+  width: 380px; height: 600px; display: flex; flex-direction: column; position: relative; overflow: hidden;
+  background: linear-gradient(180deg, var(--color-surface), var(--color-bg) 55%);
+  color: var(--color-text); font-family: var(--font-body);
+}
+.popup-head { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-6) var(--space-2); }
+.brand { font-family: var(--font-heading); font-weight: 500; font-size: 16px; line-height: 1.2; }
+.mood { font-size: 11px; color: var(--color-neutral-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-icon-sm { width: 28px; height: 28px; padding: 0; font-size: 16px; }
+#streak { gap: 4px; white-space: nowrap; }
+
+.tabs { display: flex; gap: var(--space-1); padding: var(--space-2) var(--space-6) 0; }
+.tab {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+  font-size: 12px; padding: 6px 4px; background: transparent; border: none; border-radius: 0;
+  border-bottom: 1px solid var(--color-neutral-800); color: var(--color-neutral-500);
+}
+.tab-icon { flex: 0 0 44px; }
+.tab:hover { color: var(--color-neutral-300); }
+.tab[aria-selected="true"] { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+
+.view { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--color-neutral-800) transparent; padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6); }
+.view::-webkit-scrollbar { width: 6px; }
+.view::-webkit-scrollbar-thumb { background: var(--color-neutral-800); border-radius: 3px; }
+
+.overlay {
+  position: absolute; inset: 0; display: grid; place-items: center; padding: var(--space-6);
+  background: color-mix(in srgb, var(--color-neutral-900) 70%, transparent);
+}
+.empty { font-size: 12px; color: var(--color-neutral-500); padding: var(--space-3) 0; }
+.banner { font-size: 12px; background: var(--color-accent-900); }
+.sub { font-size: 12px; color: var(--color-neutral-400); }
+.link-row { display: flex; gap: var(--space-2); font-size: 11px; color: var(--color-neutral-500); flex-wrap: wrap; }

@@ -1,0 +1,82 @@
+/* Mothlight shared styles, built on top of the Nocturne tokens (nocturne.css). */
+
+a { color: var(--color-accent); }
+a:hover { color: var(--color-accent-300); }
+select.input { appearance: none; }
+button { font: inherit; }
+
+.kicker {
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--color-neutral-500);
+}
+.muted { color: var(--color-neutral-400); }
+.faint { color: var(--color-neutral-500); }
+.big {
+  white-space: nowrap; font-family: var(--font-heading); font-weight: 500; font-size: 34px;
+  line-height: 1.05; letter-spacing: -.02em;
+}
+.row { display: flex; align-items: center; gap: var(--space-3); }
+.col { display: flex; flex-direction: column; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.pretty { text-wrap: pretty; }
+.hidden { display: none !important; }
+
+/* ── Mo the moth (CSS-drawn, from the prototype) ── */
+.mo { position: relative; width: 44px; height: 36px; flex: none; --glow: .4; }
+.mo span { position: absolute; display: block; }
+.mo-wing { top: 7px; width: 20px; height: 24px; background: var(--color-accent-800); border: 1px solid var(--color-accent-500); }
+.mo-wing-l { left: 0; border-radius: 60% 30% 50% 60%; transform: rotate(-16deg); }
+.mo-wing-r { right: 0; border-radius: 30% 60% 60% 50%; transform: rotate(16deg); }
+.mo-body {
+  left: 15px; top: 6px; width: 14px; height: 24px; border-radius: 7px; background: var(--color-accent-300);
+  box-shadow: 0 0 calc(6px + 20px * var(--glow)) calc(4px * var(--glow)) var(--color-accent-600);
+}
+.mo-eye { top: 13px; width: 3px; height: 3px; border-radius: 50%; background: var(--color-neutral-900); }
+.mo-eye-l { left: 18px; } .mo-eye-r { left: 23px; }
+.mo-ant { top: 0; width: 1px; height: 8px; background: var(--color-accent-400); }
+.mo-ant-l { left: 14px; transform: rotate(-25deg); } .mo-ant-r { left: 29px; transform: rotate(25deg); }
+.mo-lg { transform: scale(2); transform-origin: left center; margin-right: 48px; }
+@media (prefers-reduced-motion: no-preference) {
+  .mo .mo-wing-l { animation: flap-l 3.2s ease-in-out infinite; }
+  .mo .mo-wing-r { animation: flap-r 3.2s ease-in-out infinite; }
+}
+@keyframes flap-l { 0%,100% { transform: rotate(-16deg); } 50% { transform: rotate(-24deg) scaleX(.9); } }
+@keyframes flap-r { 0%,100% { transform: rotate(16deg); } 50% { transform: rotate(24deg) scaleX(.9); } }
+
+/* ── horizontal bars ("Where it went") ── */
+.bar-row { display: grid; grid-template-columns: 120px 1fr 52px; align-items: center; gap: var(--space-3); font-size: 12px; }
+.bar-name { display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.bar-track { height: 6px; border-radius: 3px; background: var(--color-neutral-900); }
+.bar-fill { height: 100%; border-radius: 3px; background: var(--color-neutral-600); }
+.bar-fill.ai { background: var(--color-accent); }
+.bar-val { text-align: right; color: var(--color-neutral-400); }
+
+/* ── vertical day bars ── */
+.vbars { display: flex; flex-direction: column; gap: 4px; padding-top: var(--space-3); }
+.vbars-plot { position: relative; display: flex; align-items: flex-end; gap: var(--space-3); height: 130px; }
+.vbar-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.vbar-fill { width: 100%; border-radius: var(--radius-sm) var(--radius-sm) 2px 2px; background: var(--color-neutral-900); border: 1px solid var(--color-neutral-800); min-height: 2px; position: relative; overflow: hidden; }
+.vbar-fill.over { border-color: var(--color-neutral-500); }
+.vbar-fill.today { background: var(--color-accent-800); border-color: var(--color-accent); }
+.vbar-ai { position: absolute; left: 0; right: 0; bottom: 0; background: var(--color-accent-700); }
+.vbars-labels { display: flex; gap: var(--space-3); }
+.vbar-label { flex: 1; text-align: center; font-size: 10px; color: var(--color-neutral-500); white-space: nowrap; }
+.vbar-label.today { color: var(--color-accent); }
+.goal-line {
+  position: absolute; left: 0; right: 0; height: 1px; pointer-events: none; z-index: 1;
+  background: linear-gradient(to right, transparent, var(--color-accent-600) 48px, var(--color-accent-600) calc(100% - 48px), transparent);
+}
+.legend-line { width: 14px; height: 1px; background: var(--color-accent-600); display: inline-block; }
+
+/* ── segmented controls: allow full width ── */
+.seg.full { display: flex; }
+.seg.full .seg-opt { flex: 1; justify-content: center; font-size: 12px; }
+
+/* ── goal ring ── */
+.ring { width: 96px; height: 96px; flex: none; border-radius: 50%; display: grid; place-items: center; }
+.ring-inner { width: 84px; height: 84px; border-radius: 50%; background: var(--color-bg); display: grid; place-items: center; text-align: center; }
+
+.icon-accent { color: var(--color-accent); }
+.toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+.toggle input { accent-color: var(--color-accent); width: 16px; height: 16px; }

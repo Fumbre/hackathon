@@ -1,0 +1,27 @@
+{
+  "name": "mothlight",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mothlight: see the real cost of your time online and your AI use. 100% local.",
+  "scripts": {
+    "build": "node build.mjs all",
+    "build:chrome": "node build.mjs chrome",
+    "build:firefox": "node build.mjs firefox",
+    "watch": "node build.mjs all --watch",
+    "typecheck": "tsc --noEmit",
+    "lint:firefox": "web-ext lint -s dist/firefox",
+    "run:firefox": "web-ext run -s dist/firefox",
+    "zip": "node build.mjs all --zip",
+    "test": "node build.mjs all && node scripts/simulate.mjs && node scripts/test-content.mjs"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@phosphor-icons/web": "^2.1.2",
+    "@types/chrome": "^0.3.7",
+    "@types/firefox-webext-browser": "^143.0.1",
+    "esbuild": "^0.28.2",
+    "jsdom": "^31.0.1",
+    "typescript": "^7.0.2",
+    "web-ext": "^10.8.0"
+  }
+}

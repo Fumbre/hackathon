@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Mothlight</title>
+  <link rel="stylesheet" href="../fonts/inter.css">
+  <link rel="stylesheet" href="../styles/nocturne.css">
+  <link rel="stylesheet" href="../phosphor/regular/style.css">
+  <link rel="stylesheet" href="../phosphor/fill/style.css">
+  <link rel="stylesheet" href="../styles/app.css">
+  <link rel="stylesheet" href="onboarding.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="row" style="gap:var(--space-6)">
+      <div id="mo"></div>
+      <div>
+        <div class="kicker">Welcome</div>
+        <h1>Hi, I'm Mo.</h1>
+      </div>
+    </header>
+    <p class="lead">Mothlight shows you what your time online and your AI use add up to: in minutes, and in the energy, carbon and water behind them. Everything stays in this browser. No account, no server.</p>
+
+    <section class="card elev-sm step" id="access">
+      <div class="card-kicker">One step</div>
+      <div class="card-title" id="access-title">Let Mo count prompts on AI sites</div>
+      <p class="card-body" id="access-body">Your browser asks you to allow Mothlight on these AI sites: ChatGPT, Claude, Gemini, Copilot, Perplexity, Mistral, DeepSeek and Grok. Mo uses this to notice <em>that</em> a prompt was sent, never <em>what</em> you wrote, and to show a small badge with today's total.</p>
+      <div class="row">
+        <button class="btn btn-primary" id="grant"><i class="ph ph-check"></i>Allow on AI sites</button>
+        <span id="granted" class="row hidden" style="gap:6px;color:var(--color-accent-300)"><i class="ph-fill ph-check-circle"></i>Allowed. You're all set.</span>
+      </div>
+    </section>
+
+    <h2>What Mothlight can see</h2>
+    <div class="grid">
+      <div class="card"><i class="ph ph-globe-simple icon-accent"></i><div class="card-title">Site names</div><p class="card-body">Only the hostname of the active tab, like <code>docs.google.com</code>. Not the page, the path or the title.</p></div>
+      <div class="card"><i class="ph ph-hand-pointing icon-accent"></i><div class="card-title">Whether you're active</div><p class="card-body">The browser tells us "active", "idle" or "locked". We never see what you type. The only click we notice is the Send button on AI sites.</p></div>
+      <div class="card"><i class="ph ph-paper-plane-tilt icon-accent"></i><div class="card-title">That a prompt was sent</div><p class="card-body">The address a chat request goes to, or a click on the site's own Send button, on AI sites only. The text of your prompt is never read.</p></div>
+      <div class="card"><i class="ph ph-lock-simple icon-accent"></i><div class="card-title">Stored only here</div><p class="card-body">In this browser's extension storage. Export or delete everything in one click, any time.</p></div>
+    </div>
+
+    <h2>Get started</h2>
+    <ol class="steps">
+      <li>Pin Mothlight: click the puzzle-piece icon in the toolbar, then the pin next to Mothlight.</li>
+      <li>Browse as usual. Time only counts while you're active and the browser is in focus.</li>
+      <li>Open the popup any time to see today, your AI footprint, and your week.</li>
+    </ol>
+    <p class="faint" style="font-size:13px">The numbers are estimates and we show where each one comes from: <a href="../dashboard/dashboard.html#sources">how we calculate</a>.</p>
+  </main>
+  <script src="onboarding.js"></script>
+</body>
+</html>
