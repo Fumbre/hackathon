@@ -5,7 +5,7 @@
 
 import { api } from './browser';
 import { dayKey } from './dates';
-import type { DayBucket, FocusState, LogEvent, LogKind, ReminderState, Segment, Settings, TrackStatus } from './types';
+import type { DayBucket, FocusSession, FocusState, LogEvent, LogKind, ReminderState, Segment, Settings, TrackStatus } from './types';
 
 export const DEFAULT_SETTINGS: Settings = {
   intervalMin: 60,
@@ -100,6 +100,18 @@ export async function getFocus(): Promise<FocusState> {
 }
 export async function setFocus(f: FocusState): Promise<void> {
   await api.storage.local.set({ focus: f });
+}
+
+/** Finished focus sessions, oldest first (the last SESSIONS_MAX are kept). */
+const SESSIONS_MAX = 50;
+export async function getFocusSessions(): Promise<FocusSession[]> {
+  const res = await api.storage.local.get('focusSessions');
+  return (res.focusSessions as FocusSession[]) ?? [];
+}
+export async function addFocusSession(s: FocusSession): Promise<void> {
+  const all = await getFocusSessions();
+  all.push(s);
+  await api.storage.local.set({ focusSessions: all.slice(-SESSIONS_MAX) });
 }
 
 export async function getReminder(): Promise<ReminderState> {

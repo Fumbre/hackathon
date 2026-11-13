@@ -10,6 +10,7 @@ import { exportAll, saveSettings } from '../lib/storage';
 import { activeSeconds, aiSeconds, pctChange, promptTotals, sumDays, topSites } from '../lib/stats';
 import type { FigureChoice, Settings } from '../lib/types';
 import { dayBars } from '../lib/charts';
+import { breakdown, liveSession, rowsHtml, stackBar, summaryLine } from '../lib/sessions';
 import { $, downloadJson, esc, fmtBytes, moHtml, openDashboard, send } from '../lib/ui';
 
 type Tab = 'today' | 'ai' | 'week' | 'settings';
@@ -53,6 +54,24 @@ function focusClock(): string {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
+/** While a session runs: where it has gone so far. After End: the last session (for 12 h). */
+function focusBreakdown(): string {
+  const last = m.sessions[m.sessions.length - 1];
+  const s = m.focus.active ? liveSession(m.focus) : last && Date.now() - last.end < 12 * 3600_000 ? last : null;
+  if (!s) return '';
+  const b = breakdown(s, 3);
+  if (m.focus.active && b.rows.length === 0) return '';
+  return `<div class="card focus-sum" style="gap:var(--space-2)">
+    <div class="row" style="justify-content:space-between">
+      <span class="kicker">${m.focus.active ? 'This session so far' : `Last session · ${fmtClock(b.start)}–${fmtClock(b.end)}`}</span>
+      <button class="btn btn-ghost" data-action="focus-details" style="font-size:11px;padding-block:0">Details <i class="ph ph-arrow-right"></i></button>
+    </div>
+    ${stackBar(b)}
+    <div class="col" style="gap:4px;font-size:12px">${rowsHtml(b)}</div>
+    <div class="faint" style="font-size:11px">${summaryLine(b)}</div>
+  </div>`;
+}
+
 function viewToday(): string {
   const secs = activeSeconds(m.today);
   const goal = m.settings.goalHours * 3600;
@@ -92,6 +111,7 @@ function viewToday(): string {
         </div>
         <button class="btn btn-primary" data-action="${m.focus.active ? 'focus-stop' : 'focus-start'}" style="font-size:12px">${m.focus.active ? 'End' : 'Start'}</button>
       </div>
+      ${focusBreakdown()}
       ${reminderLine}
     </div>
 
@@ -280,6 +300,8 @@ document.addEventListener('click', async (e) => {
       return openDashboard('#sources');
     case 'privacy':
       return openDashboard('#privacy');
+    case 'focus-details':
+      return openDashboard('#focus');
     case 'grant':
       return void api.tabs.create({ url: api.runtime.getURL('onboarding/onboarding.html') });
     case 'focus-start':

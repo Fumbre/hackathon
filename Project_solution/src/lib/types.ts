@@ -45,11 +45,28 @@ export interface Segment {
 
 export type TrackStatus = 'active' | 'idle' | 'locked' | 'unfocused' | 'no-site';
 
+/** Why time during a focus session was NOT counted as browsing. */
+export type AwayKind = 'unfocused' | 'idle' | 'locked' | 'no-site' | 'off';
+
 export interface FocusState {
   active: boolean;
   start: number; // epoch ms
   /** Active browsing seconds counted since the session started (same rules as screen time). */
   browserSec?: number;
+  /** hostname → active seconds during this session. */
+  sites?: Record<string, number>;
+  /** Seconds spent away from the browser during this session, by reason. */
+  away?: Partial<Record<AwayKind, number>>;
+  /** Everything up to this moment (epoch ms) has been put into sites/away. */
+  mark?: number;
+}
+
+/** A finished focus session: where the time went between Start and End. */
+export interface FocusSession {
+  start: number;
+  end: number;
+  sites: Record<string, number>;
+  away: Partial<Record<AwayKind, number>>;
 }
 
 export interface ReminderState {

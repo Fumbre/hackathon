@@ -83,3 +83,4 @@ body {
   .side-foot { display: none; }
   .main { padding: 24px 16px 64px; }
 }
+.session.live { box-shadow: 0 0 0 1px var(--color-accent-600); }
