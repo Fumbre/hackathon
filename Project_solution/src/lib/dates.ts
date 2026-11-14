@@ -30,10 +30,10 @@ export function weekdayShort(key: string): string {
   return new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'short' });
 }
 
-/** 3725 → "1h 02m", 300 → "5m", 20 → "<1m" */
+/** 3725 → "1h 02m", 300 → "5m", 20 → "20s" */
 export function fmtDuration(seconds: number): string {
   const totalMin = Math.floor(seconds / 60);
-  if (seconds > 0 && totalMin === 0) return '<1m';
+  if (seconds > 0 && totalMin === 0) return `${Math.max(1, Math.floor(seconds))}s`;
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
@@ -42,3 +42,13 @@ export function fmtDuration(seconds: number): string {
 export function fmtClock(ts: number): string {
   return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
+
+/** 30 → "30 min", 60 → "1 hour", 90 → "1.5 hours" */
+export function intervalLabel(min: number): string {
+  if (min < 60) return `${min} min`;
+  if (min === 60) return '1 hour';
+  return `${min / 60} hours`;
+}
+
+/** This long away from the browser (idle, locked, another app, asleep, closed) counts as a break. */
+export const BREAK_GAP_MS = 5 * 60_000;

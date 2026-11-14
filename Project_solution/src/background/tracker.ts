@@ -94,10 +94,11 @@ export function evaluate(): Promise<void> {
     // close the segment at the moment the inactivity started, not now.
     const end = obs.status === 'idle' || obs.status === 'locked' ? now - IDLE_SECONDS * 1000 : now;
     const seg = await getSegment();
-    const counted = await closeSegment(Math.max(end, seg?.start ?? end));
+    const segEnd = Math.max(end, seg?.start ?? end);
+    const counted = await closeSegment(segEnd);
     const prev = await getStatus();
     await accountFocus(now, seg?.host ?? null, counted, prev, obs.status);
-    if (counted > 0) await onActiveSeconds(counted);
+    if (counted > 0 && seg) await onActiveSeconds(counted, seg.start, seg.start + counted * 1000);
 
     if (obs.status === 'active' && obs.host) await setSegment({ host: obs.host, start: now });
 

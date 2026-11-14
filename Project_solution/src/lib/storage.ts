@@ -11,7 +11,6 @@ export const DEFAULT_SETTINGS: Settings = {
   intervalMin: 60,
   goalHours: 4,
   grid: 'NL',
-  figure: 'range',
   laptopWatts: 15,
   badge: true,
   detectHelper: false,

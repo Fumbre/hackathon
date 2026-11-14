@@ -89,8 +89,34 @@ async function copyAssets(out) {
   }
 }
 
+/** Every file under `dir`, as paths relative to it. */
+async function listFiles(dir, base = dir) {
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const e of await readdir(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...(await listFiles(p, base)));
+    else out.push(path.relative(base, p));
+  }
+  return out;
+}
+
+/**
+ * Make `dest` match `src` without ever emptying `dest`: files are overwritten in place,
+ * then stale ones removed. `npm run run:firefox` (web-ext) watches dist/firefox and reloads
+ * the extension on every change; deleting the folder first made it reload a half-empty build.
+ */
+async function syncDir(src, dest) {
+  await mkdir(dest, { recursive: true });
+  await cp(src, dest, { recursive: true, force: true });
+  const keep = new Set(await listFiles(src));
+  for (const f of await listFiles(dest)) if (!keep.has(f)) await rm(path.join(dest, f), { force: true });
+}
+
 async function buildTarget(target) {
-  const out = r('dist', target);
+  const final = r('dist', target);
+  // Watch mode writes straight into dist; a one-off build is staged first, then synced in.
+  const out = watch ? final : r('dist', `.staging-${target}`);
   await rm(out, { recursive: true, force: true });
   await mkdir(out, { recursive: true });
 
@@ -115,13 +141,15 @@ async function buildTarget(target) {
     await ctx.watch();
   } else {
     await esbuild.build(options);
+    await syncDir(out, final);
+    await rm(out, { recursive: true, force: true });
   }
 
   if (zip) {
     await mkdir(r('release'), { recursive: true });
     const file = r('release', `mothlight-${target}-${pkg.version}.zip`);
     if (existsSync(file)) await rm(file);
-    execFileSync('zip', ['-qr', file, '.'], { cwd: out });
+    execFileSync('zip', ['-qr', file, '.'], { cwd: final });
     console.log(`zipped → ${path.relative(ROOT, file)}`);
   }
   console.log(`built ${target} → dist/${target}`);

@@ -28,15 +28,28 @@ export interface SessionRow {
 export interface Breakdown {
   start: number;
   end: number;
+  /** Session time: wall clock between Start and End minus pauses. */
   total: number;
+  /** Seconds the session was paused (not part of `total`). */
+  paused: number;
   browser: number;
   away: number;
   rows: SessionRow[];
 }
 
+/** Seconds paused so far, including a pause that is still running. */
+export function pausedSoFar(f: FocusState, now = Date.now()): number {
+  return (f.pausedSec ?? 0) + (f.paused && f.pausedAt ? Math.max(0, (now - f.pausedAt) / 1000) : 0);
+}
+
+/** Focus time on the clock: wall clock since Start minus pauses. */
+export function focusElapsed(f: FocusState, now = Date.now()): number {
+  return Math.max(0, (now - f.start) / 1000 - pausedSoFar(f, now));
+}
+
 /** The running session so far, in the same shape as a finished one. */
 export function liveSession(f: FocusState, now = Date.now()): FocusSession {
-  return { start: f.start, end: now, sites: f.sites ?? {}, away: f.away ?? {} };
+  return { start: f.start, end: now, sites: f.sites ?? {}, away: f.away ?? {}, paused: pausedSoFar(f, now) };
 }
 
 export function breakdown(s: FocusSession, maxSites = 6): Breakdown {
@@ -60,9 +73,10 @@ export function breakdown(s: FocusSession, maxSites = 6): Breakdown {
   }
   const browser = sites.reduce((a, [, v]) => a + v, 0);
   const away = AWAY_ORDER.reduce((a, k) => a + (s.away[k] ?? 0), 0);
-  // The wall-clock span is the truth; tiny rounding gaps are left out of the rows.
-  const total = Math.max(1, Math.round((s.end - s.start) / 1000), browser + away);
-  return { start: s.start, end: s.end, total, browser, away, rows };
+  // The wall-clock span minus pauses is the truth; tiny rounding gaps are left out of the rows.
+  const paused = Math.round(s.paused ?? 0);
+  const total = Math.max(1, Math.round((s.end - s.start) / 1000) - paused, Math.round(browser + away));
+  return { start: s.start, end: s.end, total, paused, browser, away, rows };
 }
 
 const pct = (n: number, total: number) => Math.round((n / total) * 100);
@@ -91,5 +105,5 @@ export function rowsHtml(b: Breakdown, opts: { notes?: boolean } = {}): string {
 }
 
 export function summaryLine(b: Breakdown): string {
-  return `${fmtDuration(b.browser)} in the browser (${pct(b.browser, b.total)}%) · ${fmtDuration(b.away)} away`;
+  return `${fmtDuration(b.browser)} in the browser (${pct(b.browser, b.total)}%) · ${fmtDuration(b.away)} away${b.paused >= 1 ? ` · paused ${fmtDuration(b.paused)}` : ''}`;
 }

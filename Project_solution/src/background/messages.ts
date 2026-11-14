@@ -6,8 +6,9 @@ import { api } from '../lib/browser';
 import { appendLog, getFocus, wipeAll, withLock } from '../lib/storage';
 import type { Message } from '../lib/types';
 import { detected, detectStats, recordPrompt } from './ai-detector';
-import { startFocus, stopFocus } from './focus';
-import { snooze } from './reminders';
+import { getSettings } from '../lib/storage';
+import { pauseFocus, resumeFocus, startFocus, stopFocus } from './focus';
+import { showReminder, snooze, takeBreak } from './reminders';
 import { evaluate, hostOf } from './tracker';
 
 const EXTENSION_ORIGIN = api.runtime.getURL('');
@@ -58,6 +59,26 @@ async function handle(msg: Message, sender: chrome.runtime.MessageSender): Promi
         await stopFocus(Date.now());
         return true;
       });
+
+    case 'focusPause':
+      await evaluate(); // what happened up to now still belongs to the session
+      return withLock(async () => {
+        await pauseFocus(Date.now());
+        return true;
+      });
+
+    case 'focusResume':
+      await evaluate();
+      return withLock(async () => {
+        await resumeFocus(Date.now());
+        return true;
+      });
+
+    case 'breakTaken':
+      return withLock(() => takeBreak()).then(() => true);
+
+    case 'testReminder':
+      return withLock(async () => showReminder((await getSettings()).intervalMin, true)).then(() => true);
 
     case 'snooze':
       return withLock(() => snooze(msg.minutes)).then(() => true);

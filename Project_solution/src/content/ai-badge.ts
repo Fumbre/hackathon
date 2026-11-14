@@ -3,13 +3,13 @@
 // What this script does on the page:
 //   • adds ONE small element (inside a closed Shadow DOM so the site's CSS can't touch it)
 //     that shows today's running total
-//   • on Claude and Gemini: notices a click on the site's "Send message" button, or Enter in
+//   • on Claude, Gemini and ChatGPT: notices a click on the site's "Send message" button, or Enter in
 //     the chat box (see send-detector.ts), and tells the background "a prompt was sent"
 // What it does NOT do: it never reads the page, the chat, or what you type.
 
 import { providerForHost } from '../lib/ai-sites';
 import { api } from '../lib/browser';
-import { estimatePrompts, fmtRange } from '../lib/footprint';
+import { estimateAi, fmtNum } from '../lib/footprint';
 import { getDay, getSettings } from '../lib/storage';
 import { promptTotals } from '../lib/stats';
 import { installSendDetector } from './send-detector';
@@ -77,9 +77,9 @@ async function update() {
   const [settings, day] = await Promise.all([getSettings(), getDay()]);
   if (!settings.badge) return unmount();
   const p = promptTotals(day).total;
-  const est = estimatePrompts(p, settings.figure, settings.grid);
+  const est = estimateAi(day.ai, settings.grid);
   const r = mount();
-  (r.querySelector('.txt') as HTMLElement).textContent = `${p} prompt${p === 1 ? '' : 's'} today · ${fmtRange(est.wh)} Wh`;
+  (r.querySelector('.txt') as HTMLElement).textContent = `${p} prompt${p === 1 ? '' : 's'} today · ≈${fmtNum(est.wh)} Wh`;
 }
 
 if (provider) {

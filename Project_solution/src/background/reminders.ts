@@ -2,22 +2,28 @@
 // don't count), show a notification. Muted while a focus session runs or while snoozed.
 
 import { api, SUPPORTS_NOTIFICATION_BUTTONS } from '../lib/browser';
-import { dayKey, fmtDuration } from '../lib/dates';
+import { BREAK_GAP_MS, dayKey, fmtDuration, intervalLabel } from '../lib/dates';
 import { appendLog, getDay, getFocus, getReminder, getSettings, setReminder, updateDay, withLock } from '../lib/storage';
 import { activeSeconds, promptTotals } from '../lib/stats';
 
 const NOTIF_ID = 'mothlight-reminder';
 
-export function intervalLabel(min: number): string {
-  if (min < 60) return `${min} min`;
-  if (min === 60) return '1 hour';
-  return `${min / 60} hours`;
-}
-
-/** Called by the tracker with every chunk of active seconds it counts. */
-export async function onActiveSeconds(secs: number): Promise<void> {
+/**
+ * Called by the tracker with every chunk of active seconds it counts.
+ * `start`/`end` are when that active chunk began and ended (epoch ms).
+ */
+export async function onActiveSeconds(secs: number, start: number, end: number): Promise<void> {
   const [r, focus, settings] = await Promise.all([getReminder(), getFocus(), getSettings()]);
-  if (focus.active) return; // studying: no reminders (focus.ts keeps the session's breakdown)
+  // A long gap since the last active moment means you already had a break: start fresh.
+  if (r.lastActive && start - r.lastActive >= BREAK_GAP_MS && r.activeSec > 0) {
+    r.activeSec = 0;
+    await appendLog('break', `Break detected (${fmtDuration((start - r.lastActive) / 1000)} away): break timer reset`);
+  }
+  r.lastActive = end;
+  if (focus.active) {
+    await setReminder(r); // studying: no reminders (focus.ts keeps the session's breakdown)
+    return;
+  }
   r.activeSec += secs;
   if (r.activeSec >= settings.intervalMin * 60 && Date.now() >= r.snoozeUntil) {
     r.activeSec = 0;
@@ -28,7 +34,7 @@ export async function onActiveSeconds(secs: number): Promise<void> {
   await setReminder(r);
 }
 
-async function showReminder(intervalMin: number): Promise<void> {
+export async function showReminder(intervalMin: number, test = false): Promise<void> {
   const today = await getDay();
   const p = promptTotals(today).total;
   const options: chrome.notifications.NotificationCreateOptions = {
@@ -40,6 +46,10 @@ async function showReminder(intervalMin: number): Promise<void> {
   if (SUPPORTS_NOTIFICATION_BUTTONS) options.buttons = [{ title: 'Take a break' }, { title: 'Snooze 15m' }];
   await api.notifications.clear(NOTIF_ID);
   await api.notifications.create(NOTIF_ID, options);
+  if (test) {
+    await appendLog('reminder', 'Test notification shown');
+    return;
+  }
   await updateDay(dayKey(), (d) => void d.reminders++);
   await appendLog('reminder', `Reminder after ${intervalLabel(intervalMin)} of active time`);
 }
@@ -52,6 +62,8 @@ export async function snooze(minutes: number): Promise<void> {
 }
 
 export async function takeBreak(): Promise<void> {
+  const r = await getReminder();
+  await setReminder({ ...r, activeSec: 0, snoozeUntil: 0 });
   await updateDay(dayKey(), (d) => void d.breaks++);
   await appendLog('break', 'Took a break. Nice!');
 }

@@ -1,4 +1,4 @@
-// Notice THAT a prompt was sent on sites whose network request we can't see (Claude, Gemini).
+// Notice THAT a prompt was sent on sites whose network request we can't see (Claude, Gemini, logged-out ChatGPT).
 //
 // What this code looks at:
 //   • a click on the site's own "Send message" button (found with a CSS selector)

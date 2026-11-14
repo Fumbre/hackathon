@@ -150,6 +150,16 @@ req('POST', 'https://claude.ai/api/organizations/o1/chat_conversations/c9/comple
 await msg({ type: 'promptSent', provider: 'claude' }, { tab: { id: 21, url: 'https://claude.ai/chat/c9' } });
 await settle();
 check('one prompt seen by both network and send button counts once', () => assert.equal(day().ai.claude.detected, claudeBefore + 1));
+now += 5000;
+const gptBefore = day().ai.chatgpt.detected;
+await msg({ type: 'promptSent', provider: 'chatgpt' }, { tab: { id: 22, url: 'https://chatgpt.com/' } }); // logged out: button only
+await settle();
+check('ChatGPT send-button report counts (logged-out ChatGPT)', () => assert.equal(day().ai.chatgpt.detected, gptBefore + 1));
+now += 5000;
+await msg({ type: 'promptSent', provider: 'chatgpt' }, { tab: { id: 22, url: 'https://chatgpt.com/c/1' } });
+req('POST', 'https://chatgpt.com/backend-api/f/conversation', 22);                                        // logged in: both fire
+await settle();
+check('ChatGPT prompt seen by button + network counts once', () => assert.equal(day().ai.chatgpt.detected, gptBefore + 2));
 
 // 8. Reminder after the interval of active time; muted during focus
 await chrome.storage.local.set({ settings: { intervalMin: 30 } });
@@ -192,6 +202,45 @@ check('finished session: sites + away = the whole session', () => {
 });
 for (let i = 0; i < 31; i++) await tick(60);
 check('reminder fires after 30 min of active time', () => assert.equal(state.notifications.length, 1));
+
+// 8b. Break timer: 5+ min away from the browser counts as a break; "I took a break" resets it
+const POPUP = { url: 'chrome-extension://test/popup/popup.html' };
+for (let i = 0; i < 10; i++) await tick(60);
+check('break timer counts active time', () => assert.ok(local().reminder.activeSec >= 600));
+state.focused = false; chrome.windows.onFocusChanged.fire(-1); await settle();
+for (let i = 0; i < 6; i++) await tick(60);                                    // 6 min in another app
+state.focused = true; chrome.windows.onFocusChanged.fire(1); await settle();
+await tick(60);
+check('6 min away resets the break timer', () => assert.equal(local().reminder.activeSec, 60));
+state.focused = false; chrome.windows.onFocusChanged.fire(-1); await settle();
+for (let i = 0; i < 2; i++) await tick(60);                                    // only 2 min away
+state.focused = true; chrome.windows.onFocusChanged.fire(1); await settle();
+await tick(60);
+check('a short 2 min gap does not reset it', () => assert.equal(local().reminder.activeSec, 120));
+const breaksBefore = day().breaks;
+await msg({ type: 'breakTaken' }, POPUP);
+check('"I took a break" resets the timer and counts a break', () => {
+  assert.equal(local().reminder.activeSec, 0);
+  assert.equal(day().breaks, breaksBefore + 1);
+});
+const notesBefore = state.notifications.length;
+await msg({ type: 'testReminder' }, POPUP);
+check('test notification shows without counting a reminder', () => assert.equal(state.notifications.length, notesBefore + 1));
+
+// 8c. Focus pause: paused time is left out of the session, but recorded
+const focusSecsBefore = day().focus.seconds;
+await msg({ type: 'focusStart' }, POPUP);
+for (let i = 0; i < 10; i++) await tick(60);                                   // 10 min focused
+await msg({ type: 'focusPause' }, POPUP);
+for (let i = 0; i < 15; i++) await tick(60);                                   // 15 min paused (still browsing)
+await msg({ type: 'focusResume' }, POPUP);
+for (let i = 0; i < 5; i++) await tick(60);                                    // 5 more min
+await msg({ type: 'focusStop' }, POPUP);
+const paused = local().focusSessions.at(-1);
+check('pause: session records how long it was paused', () => assert.equal(paused.paused, 15 * 60));
+check('pause: nothing is counted for the session while paused', () => assert.equal(paused.sites['github.com'], 15 * 60));
+check('pause: study time leaves the pause out', () => assert.equal(day().focus.seconds - focusSecsBefore, 15 * 60));
+check('pause: daily total still counts browsing during the pause', () => assert.ok(day().sites['github.com'] >= 30 * 60));
 
 // 9. Midnight split
 now = new Date(2026, 10, 13, 23, 59, 30).getTime(); await tick(0);

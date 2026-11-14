@@ -14,13 +14,11 @@ export interface DayBucket {
   sites: Record<string, number>;
   /** provider id → prompt counts. */
   ai: Record<string, AiCount>;
-  /** seconds = wall-clock study time; browser = active browsing seconds during those sessions. */
-  focus: { sessions: number; seconds: number; browser?: number };
+  /** seconds = study time (wall clock minus pauses); browser = active browsing seconds during those sessions; paused = pause seconds. */
+  focus: { sessions: number; seconds: number; browser?: number; paused?: number };
   reminders: number;
   breaks: number;
 }
-
-export type FigureChoice = 'range' | 'gemini' | 'chatgpt' | 'claude';
 
 export interface Settings {
   /** Reminder after this many minutes of *active* browsing. */
@@ -28,7 +26,6 @@ export interface Settings {
   /** Daily browsing goal in hours ("under N hours"). */
   goalHours: number;
   grid: GridCode;
-  figure: FigureChoice;
   /** Assumed laptop power draw while browsing, in watts. */
   laptopWatts: number;
   /** Show the small prompt-cost badge on AI sites. */
@@ -59,6 +56,12 @@ export interface FocusState {
   away?: Partial<Record<AwayKind, number>>;
   /** Everything up to this moment (epoch ms) has been put into sites/away. */
   mark?: number;
+  /** Paused: the clock stands still and nothing is added to sites/away. */
+  paused?: boolean;
+  /** When the current pause started (epoch ms). */
+  pausedAt?: number;
+  /** Seconds spent in earlier (finished) pauses of this session. */
+  pausedSec?: number;
 }
 
 /** A finished focus session: where the time went between Start and End. */
@@ -67,12 +70,16 @@ export interface FocusSession {
   end: number;
   sites: Record<string, number>;
   away: Partial<Record<AwayKind, number>>;
+  /** Seconds the session was paused (not part of the session's time). */
+  paused?: number;
 }
 
 export interface ReminderState {
-  /** Active seconds counted since the last reminder. */
+  /** Active seconds counted since the last reminder or break. */
   activeSec: number;
   snoozeUntil: number; // epoch ms
+  /** End of the last counted active moment (epoch ms). A long gap before the next one = a break. */
+  lastActive?: number;
 }
 
 export type LogKind = 'prompt' | 'manual' | 'pause' | 'resume' | 'reminder' | 'break' | 'focus' | 'privacy' | 'debug';
@@ -90,6 +97,10 @@ export type Message =
   | { type: 'promptSent'; provider: string }
   | { type: 'focusStart' }
   | { type: 'focusStop' }
+  | { type: 'focusPause' }
+  | { type: 'focusResume' }
+  | { type: 'breakTaken' }
+  | { type: 'testReminder' }
   | { type: 'snooze'; minutes: number }
   | { type: 'wipe' }
   | { type: 'logExport' }

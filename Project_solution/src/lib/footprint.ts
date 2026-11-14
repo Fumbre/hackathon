@@ -1,8 +1,9 @@
 // Footprint maths. Every constant here is listed with its source in docs/SOURCES.md.
-// Nobody knows exactly what one prompt costs, so we show a RANGE by default
-// and always say which figure was used and why.
+// Nobody knows exactly what one prompt costs. Each service is priced with its own
+// best-known figure, and the UI always says which figure was used and why.
 
-import type { FigureChoice } from './types';
+import { AI_PROVIDERS, providerById, type FigureKey } from './ai-sites';
+import type { AiCount, DayBucket } from './types';
 
 /** Published per-text-prompt figures (company figures, not independently checked). */
 export const PER_PROMPT = {
@@ -38,64 +39,76 @@ export const LED_BULB_W = 10;
 
 export type Range = [number, number];
 
-export interface Estimate {
-  wh: Range;
-  gco2: Range;
-  ml: Range;
-  /** The single Wh-per-prompt used for "real life" comparisons. */
-  perPromptWh: number;
-  /** One-line explanation shown under the numbers. */
-  note: string;
-}
-
 export function gridIntensity(code: GridCode): number {
   return (GRIDS[code] ?? GRIDS.EU).g;
 }
 
-/** Estimate the footprint of `prompts` text prompts with the chosen figure. */
-export function estimatePrompts(prompts: number, figure: FigureChoice, grid: GridCode): Estimate {
-  const g = gridIntensity(grid) / 1000; // g per Wh
-  const p = prompts;
-  if (figure === 'gemini') {
-    const f = PER_PROMPT.gemini;
-    return {
-      wh: [p * f.wh, p * f.wh],
-      gco2: [p * f.gco2, p * f.gco2],
-      ml: [p * f.ml, p * f.ml],
-      perPromptWh: f.wh,
-      note: 'Gemini median text prompt: 0.24 Wh, 0.03 g CO₂e, 0.26 mL water (Google, Aug 2025). Company figure, not independently checked.',
-    };
+/** Central per-prompt figure for each kind of service (one number each, no range). */
+export const SERVICE_FIGURES: Record<FigureKey, { wh: number; gco2: number | null; ml: number; label: string }> = {
+  gemini: { wh: PER_PROMPT.gemini.wh, gco2: PER_PROMPT.gemini.gco2, ml: PER_PROMPT.gemini.ml, label: "Google's own Gemini figure" },
+  chatgpt: { wh: PER_PROMPT.chatgpt.wh, gco2: null, ml: PER_PROMPT.chatgpt.ml, label: "OpenAI's ChatGPT average" },
+  claude: { wh: PER_PROMPT.claude.wh, gco2: null, ml: (PER_PROMPT.gemini.ml + PER_PROMPT.chatgpt.ml) / 2, label: 'independent estimate (Anthropic publishes none)' },
+  other: { wh: PER_PROMPT.gemini.wh, gco2: null, ml: (PER_PROMPT.gemini.ml + PER_PROMPT.chatgpt.ml) / 2, label: 'no figure published: typical text prompt' },
+};
+
+export interface ServiceRow {
+  id: string;
+  name: string;
+  figure: FigureKey;
+  prompts: number;
+  perWh: number;
+  wh: number;
+  gco2: number;
+  ml: number;
+}
+
+export interface Footprint {
+  prompts: number;
+  wh: number;
+  gco2: number;
+  ml: number;
+  /** One row per service with at least one prompt, biggest energy first. */
+  rows: ServiceRow[];
+}
+
+/**
+ * The footprint of a set of prompt counts, each service priced with ITS OWN figure:
+ * Claude prompts × the Claude estimate, ChatGPT prompts × OpenAI's figure, and so on.
+ * Services without a published figure use a typical text prompt (the Gemini median).
+ */
+export function estimateAi(ai: Record<string, AiCount>, grid: GridCode): Footprint {
+  const g = gridIntensity(grid) / 1000;
+  const byId = new Map<string, ServiceRow>();
+  for (const [id, c] of Object.entries(ai)) {
+    const n = (c?.detected ?? 0) + (c?.manual ?? 0);
+    if (n <= 0) continue;
+    const prov = providerById(id);
+    const figure: FigureKey = prov?.figure ?? 'other';
+    const f = SERVICE_FIGURES[figure];
+    const wh = n * f.wh;
+    const row: ServiceRow = byId.get(id) ?? { id, name: prov?.name ?? 'Other AI', figure, prompts: 0, perWh: f.wh, wh: 0, gco2: 0, ml: 0 };
+    row.prompts += n;
+    row.wh += wh;
+    row.gco2 += f.gco2 !== null ? n * f.gco2 : wh * g;
+    row.ml += n * f.ml;
+    byId.set(id, row);
   }
-  if (figure === 'chatgpt') {
-    const f = PER_PROMPT.chatgpt;
-    return {
-      wh: [p * f.wh, p * f.wh],
-      gco2: [p * f.wh * g, p * f.wh * g],
-      ml: [p * f.ml, p * f.ml],
-      perPromptWh: f.wh,
-      note: `ChatGPT average query: 0.34 Wh, 0.32 mL water (OpenAI's CEO, June 2025). CO₂ not given, so it is estimated with your grid (${gridIntensity(grid)} g/kWh).`,
-    };
+  const rows = [...byId.values()].sort((a, b) => b.wh - a.wh || AI_PROVIDERS.findIndex((p) => p.id === a.id) - AI_PROVIDERS.findIndex((p) => p.id === b.id));
+  const sum = (k: 'prompts' | 'wh' | 'gco2' | 'ml') => rows.reduce((a, r) => a + r[k], 0);
+  return { prompts: sum('prompts'), wh: sum('wh'), gco2: sum('gco2'), ml: sum('ml'), rows };
+}
+
+/** Same as estimateAi, summed over several days. */
+export function estimateDays(days: Record<string, DayBucket>, keys: string[], grid: GridCode): Footprint {
+  const ai: Record<string, AiCount> = {};
+  for (const k of keys) {
+    for (const [id, c] of Object.entries(days[k]?.ai ?? {})) {
+      const t = (ai[id] ??= { detected: 0, manual: 0 });
+      t.detected += c.detected;
+      t.manual += c.manual;
+    }
   }
-  if (figure === 'claude') {
-    const f = PER_PROMPT.claude;
-    return {
-      wh: [p * f.wh, p * f.wh],
-      gco2: [p * f.wh * g, p * f.wh * g],
-      // No water figure for Claude: show the range of the two published company figures.
-      ml: [p * PER_PROMPT.gemini.ml, p * PER_PROMPT.chatgpt.ml],
-      perPromptWh: f.wh,
-      note: `Claude: Anthropic publishes no per-prompt figure. 0.8 Wh is an independent estimate (Jegham et al., "How Hungry is AI?", 2025, Claude 3.7 Sonnet, short prompt). It is higher partly because outside studies count the whole server. CO₂ uses your grid; water uses the 0.26–0.32 mL company range.`,
-    };
-  }
-  const lo = PER_PROMPT.low.wh;
-  const hi = PER_PROMPT.chatgpt.wh;
-  return {
-    wh: [p * lo, p * hi],
-    gco2: [p * lo * g, p * hi * g],
-    ml: [p * PER_PROMPT.gemini.ml, p * PER_PROMPT.chatgpt.ml],
-    perPromptWh: PER_PROMPT.gemini.wh,
-    note: 'Low 0.10 Wh (Google, chips only) → high 0.34 Wh (OpenAI average). Company figures, not independently checked; long answers, images and files cost more.',
-  };
+  return estimateAi(ai, grid);
 }
 
 /** Energy your own laptop used while you were actively browsing. */

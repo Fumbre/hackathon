@@ -35,7 +35,12 @@ export const AI_PROVIDERS: AiProvider[] = [
     hosts: ['chatgpt.com', 'chat.openai.com'],
     // logged-in: /backend-api/conversation or /backend-api/f/conversation; logged-out: /backend-anon/...
     sendPattern: /^\/backend-(api|anon)\/(f\/)?conversation(\?|$)/,
-    sendButton: null, // the network pattern works
+    // Logged out, ChatGPT sends prompts through a path the pattern above doesn't see,
+    // so the Send button is watched too. A prompt seen both ways counts once.
+    // Logged in: #composer-submit-button. Logged out ("lightweight composer"): a button with
+    // data-composer-submit that turns into "Stop generating" while it answers, hence the label.
+    sendButton:
+      'button#composer-submit-button, button[data-testid="send-button"], button[data-composer-submit][aria-label="Send message"]',
     figure: 'chatgpt',
   },
   {

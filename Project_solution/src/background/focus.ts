@@ -10,6 +10,7 @@
 
 import { dayKey, fmtDuration } from '../lib/dates';
 import { addFocusSession, appendLog, getFocus, getReminder, setFocus, setReminder, updateDay } from '../lib/storage';
+import { pausedSoFar } from '../lib/sessions';
 import type { AwayKind, FocusSession, TrackStatus } from '../lib/types';
 
 /** The heartbeat runs every minute. A longer gap means the extension wasn't running. */
@@ -27,6 +28,11 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 export async function accountFocus(now: number, host: string | null, counted: number, prev: TrackStatus, cur: TrackStatus): Promise<void> {
   const f = await getFocus();
   if (!f.active) return;
+  // Paused: nothing belongs to the session. Just move the mark so the pause isn't counted later.
+  if (f.paused) {
+    await setFocus({ ...f, mark: now });
+    return;
+  }
   const sites = { ...(f.sites ?? {}) };
   const away = { ...(f.away ?? {}) };
   const elapsed = Math.max(0, (now - (f.mark ?? f.start)) / 1000);
@@ -52,21 +58,40 @@ export async function startFocus(now: number): Promise<void> {
   await appendLog('focus', 'Focus session started: reminders muted');
 }
 
+/** Pause the session. The caller has just run the tracker up to `now`. */
+export async function pauseFocus(now: number): Promise<void> {
+  const f = await getFocus();
+  if (!f.active || f.paused) return;
+  await setFocus({ ...f, paused: true, pausedAt: now, mark: now });
+  await appendLog('focus', 'Focus session paused');
+}
+
+/** Resume a paused session. The caller has just run the tracker up to `now`. */
+export async function resumeFocus(now: number): Promise<void> {
+  const f = await getFocus();
+  if (!f.active || !f.paused) return;
+  const pausedSec = round1(pausedSoFar(f, now));
+  await setFocus({ ...f, paused: false, pausedAt: undefined, pausedSec, mark: now });
+  await appendLog('focus', `Focus session resumed after a ${fmtDuration(pausedSec - (f.pausedSec ?? 0))} pause`);
+}
+
 /** End the session and save its breakdown. The caller has just run the tracker up to `now`. */
 export async function stopFocus(now: number): Promise<FocusSession | null> {
   const f = await getFocus();
   if (!f.active) return null;
-  const secs = Math.round((now - f.start) / 1000);
-  const session: FocusSession = { start: f.start, end: now, sites: f.sites ?? {}, away: f.away ?? {} };
+  const paused = Math.round(pausedSoFar(f, now));
+  const secs = Math.max(0, Math.round((now - f.start) / 1000) - paused);
+  const session: FocusSession = { start: f.start, end: now, sites: f.sites ?? {}, away: f.away ?? {}, paused };
   await addFocusSession(session);
   await updateDay(dayKey(), (d) => {
     d.focus.sessions++;
     d.focus.seconds += secs;
     d.focus.browser = Math.round((d.focus.browser ?? 0) + (f.browserSec ?? 0));
+    d.focus.paused = Math.round((d.focus.paused ?? 0) + paused);
   });
   await setFocus({ active: false, start: 0, browserSec: 0 });
   const r = await getReminder();
-  await setReminder({ ...r, activeSec: 0 }); // you were studying: start the break timer fresh
-  await appendLog('focus', `Focus session ended after ${fmtDuration(secs)} (${fmtDuration(f.browserSec ?? 0)} of it in the browser)`);
+  await setReminder({ ...r, activeSec: 0, lastActive: now }); // you were studying: start the break timer fresh
+  await appendLog('focus', `Focus session ended after ${fmtDuration(secs)} (${fmtDuration(f.browserSec ?? 0)} of it in the browser${paused >= 1 ? `, paused ${fmtDuration(paused)}` : ''})`);
   return session;
 }
