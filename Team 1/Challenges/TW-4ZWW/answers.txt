@@ -11,13 +11,13 @@ TEAMNAME:
 08: TW{files_inside_files_fa0f9b}
 09: TW{filter_then_sort_449105}
 10: TW{select_from_the_past_39b14d}
-11: 
-12: 
-13: 
-14: 
+11: TW{hover_before_you_click_0e4acd}
+12: TW{packets_carry_files_c356b9}
+13: TW{corners_make_it_scan_c1396e}
+14: TW{listen_with_your_eyes_b7506f}
 15: 
-16: 
-17: 
-18: 
-19: 
+16: TW{frequency_beats_xor_db65f1}
+17: TW{git_never_forgets_c6b02a}
+18: TW{shared_primes_break_rsa_2d1b02}
+19: TW{bits_zips_and_exif_47222b}
 20: TW{nice_try_the_vm_checks_everything}

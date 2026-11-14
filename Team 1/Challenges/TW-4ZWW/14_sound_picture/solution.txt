@@ -1,0 +1,1 @@
+ffmpeg -i transmission.wav -lavfi showspectrumpic=s=1600x600:legend=0 spectrogram.png
